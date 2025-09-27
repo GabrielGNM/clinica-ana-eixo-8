@@ -7,7 +7,8 @@ import Index from "./pages/Index";
 import Agendamento from "./pages/Agendamento";
 import Atendimento from "./pages/Atendimento";
 import Pacientes from "./pages/Pacientes";
-import Profissionais from "./pages/Profissionais"; // Import Profissionais
+import Profissionais from "./pages/Profissionais";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,10 +21,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/agendamento" element={<Agendamento />} />
           <Route path="/atendimento" element={<Atendimento />} />
           <Route path="/pacientes" element={<Pacientes />} />
-          <Route path="/profissionais" element={<Profissionais />} /> {/* Add Profissionais route */}
+          <Route path="/profissionais" element={<Profissionais />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
