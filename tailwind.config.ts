@@ -64,13 +64,13 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				clinic: {
-					teal: '#20B2AA',
-					green: '#4CAF50',
-					blue: '#2196F3',
-					yellow: '#FFC107',
-					red: '#F44336',
-					gray: '#757575',
-					'light-bg': '#F5F9FA'
+					teal: 'hsl(var(--clinic-teal))',
+					green: 'hsl(var(--clinic-green))',
+					blue: 'hsl(var(--clinic-blue))',
+					yellow: 'hsl(var(--clinic-yellow))',
+					red: 'hsl(var(--clinic-red))',
+					gray: 'hsl(var(--clinic-gray))',
+					'light-bg': 'hsl(var(--clinic-light-bg))'
 				}
 			},
 			borderRadius: {

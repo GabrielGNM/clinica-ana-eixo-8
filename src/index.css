@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -45,6 +44,15 @@
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Clinic colors in HSL format */
+    --clinic-teal: 177 48% 42%;
+    --clinic-green: 122 39% 49%;
+    --clinic-blue: 207 90% 54%;
+    --clinic-yellow: 45 100% 51%;
+    --clinic-red: 4 90% 58%;
+    --clinic-gray: 0 0% 46%;
+    --clinic-light-bg: 195 33% 96%;
   }
 
   .dark {
@@ -84,6 +92,15 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Clinic colors for dark mode */
+    --clinic-teal: 177 48% 42%;
+    --clinic-green: 122 39% 49%;
+    --clinic-blue: 207 90% 54%;
+    --clinic-yellow: 45 100% 51%;
+    --clinic-red: 4 90% 58%;
+    --clinic-gray: 0 0% 46%;
+    --clinic-light-bg: 222.2 47.4% 11.2%;
   }
 }
 
@@ -93,7 +110,7 @@
   }
 
   body {
-    @apply bg-clinic-light-bg text-foreground font-sans;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
