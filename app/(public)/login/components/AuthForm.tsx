@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,9 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/app/_components/ui/form";
-import { FcGoogle } from "react-icons/fc";
-import { executeAction } from "@/app/_lib/executeAction";
-import { singInAction } from "@/app/_actions/sign-in";
 import { authSchema } from "@/app/_lib/zod";
 
 type AuthFormValues = z.infer<typeof authSchema>;
@@ -29,22 +27,45 @@ export function AuthForm() {
     },
   });
 
-  function onSubmit(values: AuthFormValues) {
-    console.log("Dados enviados:", values);
-    // Lógica de login normal (email/senha)
-  }
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleGoogleLogin = async () => {
-    const result = await executeAction({
-      actionFn: () => singInAction("google"),
-      successMessage: "Login com Google bem-sucedido!",
-    });
+  async function onSubmit(values: AuthFormValues) {
+    setIsLoading(true);
+    setError(null);
 
-    if (!result.success) {
-      console.error(result.message);
-      // Aqui você pode exibir um toast ou feedback visual
+    try {
+      const response = await fetch('https://localhost:7084/api/Auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Credenciais inválidas');
+      }
+
+      const data = await response.json();
+      
+      // Armazenar o token se retornado pela API
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      }
+
+      // Redirecionar para o dashboard após login bem-sucedido
+      window.location.href = '/dashboard';
+      
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Erro ao fazer login');
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
 
   return (
     <div className="w-full max-w-sm mx-auto mt-10 space-y-4">
@@ -76,29 +97,16 @@ export function AuthForm() {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full">
-            Entrar
+          {error && (
+            <div className="text-red-600 text-sm text-center bg-red-50 p-2 rounded">
+              {error}
+            </div>
+          )}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
       </Form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-gray-500">Ou</span>
-        </div>
-      </div>
-
-      <Button
-        variant="outline"
-        className="w-full flex items-center gap-2 cursor-pointer"
-        onClick={handleGoogleLogin}
-      >
-        <FcGoogle size={20} />
-        Entrar com Google
-      </Button>
     </div>
   );
 }
