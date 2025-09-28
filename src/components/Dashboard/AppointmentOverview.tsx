@@ -7,7 +7,7 @@ type Appointment = {
   time: string;
   patientName: string;
   professional: string;
-  status: "Agendado" | "Chegou" | "Em Atendimento" | "Finalizado" | "Faltou" | "Cancelado";
+  status: "Agendado" | "Desmarcado" | "Cancelado";
 };
 
 const appointments: Appointment[] = [
@@ -23,21 +23,21 @@ const appointments: Appointment[] = [
     time: "10:00",
     patientName: "Roberto Ferreira",
     professional: "Dr. Marcos Oliveira",
-    status: "Chegou"
+    status: "Desmarcado"
   },
   {
     id: 3,
     time: "11:00",
     patientName: "Juliana Martins",
     professional: "Dra. Carla Santos",
-    status: "Em Atendimento"
+    status: "Cancelado"
   },
   {
     id: 4,
     time: "13:30",
     patientName: "Pedro Costa",
     professional: "Dr. Marcos Oliveira",
-    status: "Agendado"
+    status: "Desmarcado"
   },
   {
     id: 5,
@@ -52,14 +52,8 @@ const getStatusClass = (status: Appointment["status"]): string => {
   switch (status) {
     case "Agendado":
       return "status-agendado";
-    case "Chegou":
-      return "status-chegou";
-    case "Em Atendimento":
-      return "status-em-atendimento";
-    case "Finalizado":
-      return "status-finalizado";
-    case "Faltou":
-      return "status-faltou";
+    case "Desmarcado":
+      return "status-desmarcado";
     case "Cancelado":
       return "status-cancelado";
     default:

@@ -37,25 +37,41 @@ const ProfessionalList = ({
 }) => {
   // Dummy data for now
   const [professionals, setProfessionals] = useState<Professional[]>([
-    { id: 1, name: "Dr. John Doe", specialty: "Cardiologist", registerNumber: "CRM-12345" },
-    { id: 2, name: "Jane Smith", specialty: "Physical Therapist", registerNumber: "CREFITO-67890" },
+    {
+      id: 1,
+      name: "Dr. John Doe",
+      specialty: "Cardiologist",
+      registerNumber: "CRM-12345",
+    },
+    {
+      id: 2,
+      name: "Jane Smith",
+      specialty: "Physical Therapist",
+      registerNumber: "CREFITO-67890",
+    },
   ]);
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredProfessionals = professionals.filter((professional) =>
-    professional.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    professional.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    professional.registerNumber.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProfessionals = professionals.filter(
+    (professional) =>
+      professional.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      professional.specialty
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      professional.registerNumber
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex items-center justify-between mb-4">
         <Button onClick={onAddProfessional}>Adicionar Profissional</Button>
         <Input
           type="search"
           placeholder="Buscar profissional..."
+          className="max-w-sm"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -87,7 +103,9 @@ const ProfessionalList = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => onEditProfessional(professional.id)}>
+                    <DropdownMenuItem
+                      onClick={() => onEditProfessional(professional.id)}
+                    >
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -99,7 +117,9 @@ const ProfessionalList = ({
           ))}
           {filteredProfessionals.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className="text-center">Nenhum profissional encontrado.</TableCell>
+              <TableCell colSpan={4} className="text-center">
+                Nenhum profissional encontrado.
+              </TableCell>
             </TableRow>
           )}
         </TableBody>

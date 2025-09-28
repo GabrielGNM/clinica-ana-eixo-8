@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Calendar, Users, ClipboardCheck, CreditCard, Settings, Menu, User, Home } from "lucide-react";
+import {
+  Calendar,
+  Users,
+  ClipboardCheck,
+  CreditCard,
+  Settings,
+  Menu,
+  User,
+  Home,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png"; // Import the image
@@ -9,38 +18,38 @@ const navItems = [
   {
     name: "Painel Inicial",
     href: "/",
-    icon: Home
+    icon: Home,
   },
   {
     name: "Agendamento",
     href: "/agendamento",
-    icon: Calendar
+    icon: Calendar,
   },
   {
     name: "Atendimento",
     href: "/atendimento",
-    icon: ClipboardCheck
+    icon: ClipboardCheck,
   },
   {
     name: "Pacientes",
     href: "/pacientes",
-    icon: Users
+    icon: Users,
   },
   {
     name: "Faturamento",
     href: "/faturamento",
-    icon: CreditCard
+    icon: CreditCard,
   },
   {
     name: "Profissionais",
     href: "/profissionais",
-    icon: User
+    icon: User,
   },
   {
     name: "Configurações",
     href: "/configuracoes",
-    icon: Settings
-  }
+    icon: Settings,
+  },
 ];
 
 const Sidebar = () => {
@@ -48,13 +57,13 @@ const Sidebar = () => {
   const location = useLocation();
 
   return (
-    <div 
+    <div
       className={cn(
         "bg-white border-r border-gray-200 h-screen transition-all duration-300",
         collapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="flex justify-between items-center p-4 border-b border-gray-200">
+      <div className="flex items-center p-4 border-b border-gray-200 h-16">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-clinic-teal flex items-center justify-center">
@@ -63,9 +72,12 @@ const Sidebar = () => {
             <span className="font-bold text-lg">neurohabiliTo</span>
           </div>
         )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        {collapsed && (
+          <div className="w-8 h-8" /> // Placeholder to keep the button centered when collapsed
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => setCollapsed(!collapsed)}
           className="ml-auto"
         >
@@ -87,7 +99,10 @@ const Sidebar = () => {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <item.icon size={20} className={cn(collapsed ? "mx-0" : "mr-2")} />
+                <item.icon
+                  size={20}
+                  className={cn(collapsed ? "mx-0" : "mr-2")}
+                />
                 {!collapsed && <span>{item.name}</span>}
               </Link>
             </li>
