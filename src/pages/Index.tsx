@@ -1,8 +1,6 @@
 
 import Layout from "@/components/Layout/Layout";
 import AppointmentOverview from "@/components/Dashboard/AppointmentOverview";
-import PatientWaiting from "@/components/Dashboard/PatientWaiting";
-import Alerts from "@/components/Dashboard/Alerts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarDays, Activity, Users, ClipboardCheck } from "lucide-react";
 
@@ -61,7 +59,7 @@ const Index = () => {
         <Card className="bg-white">
           <CardContent className="p-6 flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Taxa de Ocupação</p>
+              <p className="text-sm text-muted-foreground">Progresso do Dia</p>
               <p className="text-2xl font-bold">78%</p>
             </div>
             <div className="p-2 rounded-full bg-amber-100">
@@ -71,14 +69,8 @@ const Index = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <AppointmentOverview />
-        </div>
-        <div className="space-y-6">
-          <PatientWaiting />
-          <Alerts />
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+        <AppointmentOverview />
       </div>
     </Layout>
   );
