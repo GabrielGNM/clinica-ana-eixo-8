@@ -93,7 +93,7 @@ const AppointmentOverview = () => {
         <CardContent>
           <div className="space-y-4">
             {scheduledAppointments.map((appointment) => (
-            <div key={appointment.id} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+            <div key={appointment.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0 gap-3">
               <div className="flex items-center gap-4 flex-1">
                 <div className="text-center min-w-14">
                   <span className="font-bold text-primary">{appointment.time}</span>
@@ -102,18 +102,13 @@ const AppointmentOverview = () => {
                   <p className="font-medium">{appointment.patientName}</p>
                   <p className="text-sm text-muted-foreground">{appointment.appointmentType}</p>
                 </div>
-                <div>
-                  <span className={cn("status-badge", getStatusClass(appointment.status))}>
-                    {appointment.status}
-                  </span>
-                </div>
               </div>
-              <div className="flex items-center gap-2 ml-4">
-                <Button size="sm" variant="outline" onClick={() => handleEditClick(appointment)}>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-4">
+                <Button size="sm" variant="outline" onClick={() => handleEditClick(appointment)} className="w-full sm:w-auto">
                   <Edit className="h-4 w-4 mr-1" />
                   Editar Data
                 </Button>
-                <Button size="sm" variant="default" onClick={() => handleFinishClick(appointment)}>
+                <Button size="sm" variant="default" onClick={() => handleFinishClick(appointment)} className="w-full sm:w-auto">
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Finalizar
                 </Button>
