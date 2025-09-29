@@ -2,43 +2,46 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, Lock, LogIn, UserPlus } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, UserPlus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 
-const loginSchema = z.object({
+const registerSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255, { message: "Email deve ter menos de 255 caracteres" }),
-  password: z.string().trim().nonempty({ message: "Senha é obrigatória" }).min(4, { message: "Senha deve ter pelo menos 4 caracteres" })
+  password: z.string().trim().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
+  confirmPassword: z.string().trim()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
-const Login = () => {
+const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     
     try {
-      const response = await fetch("https://localhost:7084/api/Auth/login", {
+      const response = await fetch("https://localhost:7084/api/Auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,29 +53,22 @@ const Login = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
-        
-        // Salva o token
-        if (result.token) {
-          login(result.token);
-        }
-        
         toast({
-          title: "Login realizado com sucesso",
-          description: "Você será redirecionado em breve.",
+          title: "Cadastro realizado com sucesso",
+          description: "Você já pode fazer login com suas credenciais.",
         });
         
-        // Redireciona para a home
+        // Redireciona para login após 2 segundos
         setTimeout(() => {
-          navigate("/");
-        }, 1000);
+          navigate("/login");
+        }, 2000);
         
       } else {
         const errorData = await response.json();
         toast({
           variant: "destructive",
-          title: "Erro no login",
-          description: errorData.message || "Credenciais inválidas",
+          title: "Erro no cadastro",
+          description: errorData.message || "Não foi possível criar a conta",
         });
       }
     } catch (error) {
@@ -97,7 +93,7 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">neurohabiliTo</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Faça login para acessar sua conta
+            Crie sua conta para começar
           </CardDescription>
         </CardHeader>
         
@@ -150,6 +146,34 @@ const Login = () => {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+                Confirmar Senha
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirme sua senha"
+                  className="pl-10 pr-10"
+                  {...register("confirmPassword")}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </Button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              )}
+            </div>
+
             <Button
               type="submit"
               className="w-full"
@@ -158,12 +182,12 @@ const Login = () => {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
-                  Entrando...
+                  Cadastrando...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <LogIn size={16} />
-                  Entrar
+                  <UserPlus size={16} />
+                  Cadastrar
                 </div>
               )}
             </Button>
@@ -172,10 +196,10 @@ const Login = () => {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/login")}
             >
-              <UserPlus size={16} className="mr-2" />
-              Criar Conta
+              <ArrowLeft size={16} className="mr-2" />
+              Voltar para Login
             </Button>
           </form>
         </CardContent>
@@ -184,4 +208,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Register;

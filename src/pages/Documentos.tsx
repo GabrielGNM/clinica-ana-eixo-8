@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Layout from "@/components/Layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { FileText, Upload, Sparkles, Calendar, User, Clock, Eye, Edit } from "lucide-react";
+import { FileText, Upload, Sparkles, Calendar, User, Clock, Eye, Edit, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface PendingDocument {
   id: string;
@@ -75,7 +76,50 @@ const Documentos = () => {
   const [nextSteps, setNextSteps] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const { token } = useAuth();
+
+  // Fetch documents from API (placeholder for now)
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!token) return;
+
+      try {
+        // Placeholder: Em produção, buscar documentos da API
+        // const response = await fetch("https://localhost:7084/api/Documents", {
+        //   headers: {
+        //     "Authorization": `Bearer ${token}`
+        //   }
+        // });
+        // const data = await response.json();
+        // setSavedDocuments(data);
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+      }
+    };
+
+    fetchDocuments();
+  }, [token]);
+
+  // Filter and sort documents
+  const filteredAndSortedDocuments = useMemo(() => {
+    let filtered = savedDocuments;
+
+    // Filter by patient name
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(doc => 
+        doc.patientName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Sort by date (descending)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  }, [savedDocuments, searchTerm]);
 
   const handleGenerateAIEvolution = async () => {
     if (!evolutionText.trim()) {
@@ -379,11 +423,28 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
         {savedDocuments.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Documentos Salvos</CardTitle>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <CardTitle>Documentos Salvos</CardTitle>
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    type="text"
+                    placeholder="Buscar por paciente..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {savedDocuments.map((document) => (
+                {filteredAndSortedDocuments.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    {searchTerm ? "Nenhum documento encontrado para esta busca." : "Nenhum documento salvo encontrado."}
+                  </div>
+                ) : (
+                  filteredAndSortedDocuments.map((document) => (
                   <div
                     key={document.id}
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 gap-3"
@@ -426,7 +487,8 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
                       </Button>
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
