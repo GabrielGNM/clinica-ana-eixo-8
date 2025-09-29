@@ -169,9 +169,9 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
 
   return (
     <Layout>
-      <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Documentos</h1>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Documentos</h1>
           <div className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
@@ -189,22 +189,24 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
               {pendingDocuments.map((document) => (
                 <div
                   key={document.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 gap-3"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{document.patientName}</span>
+                      <span className="font-medium text-sm sm:text-base">{document.patientName}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>{document.appointmentDate}</span>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>{document.appointmentDate}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span>{document.appointmentTime}</span>
+                      </div>
+                      <Badge variant="outline" className="text-xs">{document.appointmentType}</Badge>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>{document.appointmentTime}</span>
-                    </div>
-                    <Badge variant="outline">{document.appointmentType}</Badge>
                   </div>
                   <div className="flex items-center gap-3">
                     {getStatusBadge(document.status)}
@@ -215,6 +217,7 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
                             variant="default" 
                             size="sm"
                             onClick={() => setSelectedDocument(document)}
+                            className="w-full sm:w-auto"
                           >
                             Criar Documento
                           </Button>
@@ -246,15 +249,15 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
                                       className="flex-1"
                                     />
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleGenerateAIEvolution}
-                                    disabled={isGeneratingAI}
-                                    className="mt-2"
-                                  >
-                                    <Sparkles className="h-4 w-4 mr-2" />
-                                    {isGeneratingAI ? "Gerando..." : "Gerar com IA"}
-                                  </Button>
+                                   <Button
+                                     variant="outline"
+                                     onClick={handleGenerateAIEvolution}
+                                     disabled={isGeneratingAI}
+                                     className="mt-2 w-full sm:w-auto"
+                                   >
+                                     <Sparkles className="h-4 w-4 mr-2" />
+                                     {isGeneratingAI ? "Gerando..." : "Gerar com IA"}
+                                   </Button>
                                 </div>
                                 
                                 <div>
@@ -292,11 +295,18 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
                             </TabsContent>
                           </Tabs>
                           
-                          <div className="flex justify-end gap-2 mt-6">
-                            <Button variant="outline" onClick={() => setSelectedDocument(null)}>
+                          <div className="flex flex-col sm:flex-row justify-end gap-2 mt-6">
+                            <Button 
+                              variant="outline" 
+                              onClick={() => setSelectedDocument(null)}
+                              className="w-full sm:w-auto"
+                            >
                               Cancelar
                             </Button>
-                            <Button onClick={handleSaveDocument}>
+                            <Button 
+                              onClick={handleSaveDocument}
+                              className="w-full sm:w-auto"
+                            >
                               Salvar Documento
                             </Button>
                           </div>

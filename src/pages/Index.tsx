@@ -15,8 +15,8 @@ const Index = () => {
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Painel Inicial</h1>
-        <p className="text-muted-foreground">Hoje é {today}</p>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Painel Inicial</h1>
+        <p className="text-sm text-muted-foreground">Hoje é {today}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

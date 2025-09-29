@@ -153,26 +153,27 @@ const Atendimento = () => {
   return (
     <Layout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Atendimento</h1>
-        <p className="text-muted-foreground">Gerenciamento dos atendimentos do dia</p>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Atendimento</h1>
+        <p className="text-sm text-muted-foreground">Gerenciamento dos atendimentos do dia</p>
       </div>
 
       <div className="grid gap-6">
         <div className="border rounded-lg overflow-hidden bg-white">
-          <div className="p-4 border-b flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-clinic-teal" />
-            <h2 className="font-semibold">Atendimentos de Hoje</h2>
+          <div className="p-3 sm:p-4 border-b flex items-center gap-2">
+            <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-clinic-teal" />
+            <h2 className="text-sm sm:text-base font-semibold">Atendimentos de Hoje</h2>
           </div>
           
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]"></TableHead>
-                <TableHead className="w-[100px]">Horário</TableHead>
-                <TableHead>Paciente</TableHead>
-                <TableHead>Local</TableHead>
-                <TableHead>Tipo de Atendimento</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="w-[80px] sm:w-[100px] text-xs sm:text-sm">Horário</TableHead>
+                <TableHead className="text-xs sm:text-sm">Paciente</TableHead>
+                <TableHead className="text-xs sm:text-sm">Local</TableHead>
+                <TableHead className="text-xs sm:text-sm">Tipo de Atendimento</TableHead>
+                <TableHead className="text-xs sm:text-sm">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -184,27 +185,28 @@ const Atendimento = () => {
                       onCheckedChange={(checked) => handleCheckboxChange(appointment.id, checked as boolean)}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
+                  <TableCell className="font-medium text-xs sm:text-sm">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
                       {appointment.time}
                     </div>
                   </TableCell>
-                  <TableCell>{appointment.patientName}</TableCell>
-                  <TableCell>{appointment.local}</TableCell>
-                  <TableCell>{appointment.tipoAtendimento}</TableCell>
+                  <TableCell className="text-xs sm:text-sm">{appointment.patientName}</TableCell>
+                  <TableCell className="text-xs sm:text-sm">{appointment.local}</TableCell>
+                  <TableCell className="text-xs sm:text-sm">{appointment.tipoAtendimento}</TableCell>
                   <TableCell>{getStatusBadge(appointmentStatuses[appointment.id] || appointment.status)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          </div>
         </div>
 
         <div className="flex justify-end">
           <Button 
             onClick={handleFinalizarClick}
             disabled={selectedAppointments.length === 0}
-            className="bg-clinic-teal hover:bg-clinic-teal/90"
+            className="bg-clinic-teal hover:bg-clinic-teal/90 w-full sm:w-auto"
           >
             Finalizar ({selectedAppointments.length})
           </Button>
@@ -280,13 +282,18 @@ const Atendimento = () => {
             )}
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBatchDialog(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowBatchDialog(false)}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
             <Button 
               onClick={handleBatchSubmit}
               disabled={!batchAction || ((batchAction === "Desmarcado" || batchAction === "Falta") && !batchReason)}
+              className="w-full sm:w-auto"
             >
               Confirmar
             </Button>

@@ -137,3 +137,9 @@
     @apply bg-gray-100 text-gray-800;
   }
 }
+
+@layer utilities {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png"; // Import the image
+import { useIsMobile } from "@/hooks/use-mobile";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   {
@@ -56,6 +57,33 @@ const navItems = [
 const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom">
+        <nav className="flex justify-around items-center py-2 px-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                "flex flex-col items-center justify-center p-2 rounded-md transition-colors min-w-[60px]",
+                location.pathname === item.href
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              )}
+            >
+              <item.icon size={20} className="mb-1" />
+              <span className="text-xs font-medium truncate w-full text-center">
+                {item.name.split(' ')[0]}
+              </span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+    );
+  }
 
   return (
     <div

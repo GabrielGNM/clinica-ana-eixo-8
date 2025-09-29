@@ -20,8 +20,8 @@ const Navbar = () => {
   };
 
   return (
-    <div className="bg-white h-16 flex items-center justify-end px-6">
-      <div className="flex items-center gap-4">
+    <div className="bg-white h-16 flex items-center justify-end px-4 sm:px-6 border-b border-gray-200">
+      <div className="flex items-center gap-2 sm:gap-4">
         <div className="relative">
           <Button variant="ghost" size="icon" className="relative">
             <Bell size={20} />
