@@ -72,14 +72,11 @@ const Sidebar = () => {
             <span className="font-bold text-lg">neurohabiliTo</span>
           </div>
         )}
-        {collapsed && (
-          <div className="w-8 h-8" /> // Placeholder to keep the button centered when collapsed
-        )}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
-          className="ml-auto"
+          className={cn(collapsed ? "mx-auto" : "ml-auto")}
         >
           <Menu size={20} />
         </Button>
