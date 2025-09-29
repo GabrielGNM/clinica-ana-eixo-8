@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { FileText, Upload, Sparkles, Calendar, User, Clock } from "lucide-react";
+import { FileText, Upload, Sparkles, Calendar, User, Clock, Eye, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PendingDocument {
@@ -20,6 +20,18 @@ interface PendingDocument {
   appointmentType: string;
   status: "pending" | "completed";
   documentType: "evolution" | "report";
+}
+
+interface SavedDocument {
+  id: string;
+  patientName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  appointmentType: string;
+  evolutionText: string;
+  nextSteps: string;
+  attachments: string[];
+  createdAt: string;
 }
 
 // Mock data for pending documents
@@ -55,7 +67,10 @@ const mockPendingDocuments: PendingDocument[] = [
 
 const Documentos = () => {
   const [pendingDocuments, setPendingDocuments] = useState<PendingDocument[]>(mockPendingDocuments);
+  const [savedDocuments, setSavedDocuments] = useState<SavedDocument[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<PendingDocument | null>(null);
+  const [viewDocument, setViewDocument] = useState<SavedDocument | null>(null);
+  const [editDocument, setEditDocument] = useState<SavedDocument | null>(null);
   const [evolutionText, setEvolutionText] = useState("");
   const [nextSteps, setNextSteps] = useState("");
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -139,6 +154,21 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
       return;
     }
 
+    // Create saved document
+    const newSavedDocument: SavedDocument = {
+      id: selectedDocument.id + "-saved",
+      patientName: selectedDocument.patientName,
+      appointmentDate: selectedDocument.appointmentDate,
+      appointmentTime: selectedDocument.appointmentTime,
+      appointmentType: selectedDocument.appointmentType,
+      evolutionText,
+      nextSteps,
+      attachments: selectedFile ? [selectedFile.name] : [],
+      createdAt: new Date().toISOString()
+    };
+
+    setSavedDocuments(prev => [...prev, newSavedDocument]);
+
     // Update document status
     setPendingDocuments(prev => 
       prev.map(doc => 
@@ -158,6 +188,25 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
     setEvolutionText("");
     setNextSteps("");
     setSelectedFile(null);
+  };
+
+  const handleEditSave = () => {
+    if (!editDocument) return;
+
+    setSavedDocuments(prev => 
+      prev.map(doc => 
+        doc.id === editDocument.id 
+          ? editDocument
+          : doc
+      )
+    );
+
+    toast({
+      title: "Documento Atualizado",
+      description: "Alterações salvas com sucesso!"
+    });
+
+    setEditDocument(null);
   };
 
   const getStatusBadge = (status: PendingDocument["status"]) => {
@@ -325,7 +374,198 @@ Continuidade do protocolo estabelecido com progressão gradual das atividades co
             </div>
           </CardContent>
         </Card>
+
+        {/* Saved Documents Section */}
+        {savedDocuments.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Documentos Salvos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {savedDocuments.map((document) => (
+                  <div
+                    key={document.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-muted/50 gap-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-1">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm sm:text-base">{document.patientName}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>{document.appointmentDate}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{document.appointmentTime}</span>
+                        </div>
+                        <Badge variant="outline" className="text-xs">{document.appointmentType}</Badge>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewDocument(document)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        Visualizar
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setEditDocument(document)}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Editar
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* View Document Dialog */}
+      <Dialog open={!!viewDocument} onOpenChange={() => setViewDocument(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Visualizar Documento - {viewDocument?.patientName}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewDocument && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Paciente</Label>
+                  <p className="font-medium">{viewDocument.patientName}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Data</Label>
+                  <p className="font-medium">{viewDocument.appointmentDate}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Horário</Label>
+                  <p className="font-medium">{viewDocument.appointmentTime}</p>
+                </div>
+              </div>
+
+              <div>
+                <Label>Evolução Clínica</Label>
+                <div className="mt-2 p-4 bg-muted rounded-lg whitespace-pre-wrap">
+                  {viewDocument.evolutionText}
+                </div>
+              </div>
+
+              {viewDocument.nextSteps && (
+                <div>
+                  <Label>Próximos Passos</Label>
+                  <div className="mt-2 p-4 bg-muted rounded-lg whitespace-pre-wrap">
+                    {viewDocument.nextSteps}
+                  </div>
+                </div>
+              )}
+
+              {viewDocument.attachments.length > 0 && (
+                <div>
+                  <Label>Anexos</Label>
+                  <div className="mt-2 space-y-2">
+                    {viewDocument.attachments.map((file, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded">
+                        <FileText className="h-4 w-4" />
+                        <span className="text-sm">{file}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button onClick={() => setViewDocument(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Document Dialog */}
+      <Dialog open={!!editDocument} onOpenChange={() => setEditDocument(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Editar Documento - {editDocument?.patientName}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {editDocument && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Paciente</Label>
+                  <p className="font-medium">{editDocument.patientName}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Data</Label>
+                  <p className="font-medium">{editDocument.appointmentDate}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Horário</Label>
+                  <p className="font-medium">{editDocument.appointmentTime}</p>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-evolution">Evolução Clínica</Label>
+                <Textarea
+                  id="edit-evolution"
+                  value={editDocument.evolutionText}
+                  onChange={(e) => setEditDocument({ ...editDocument, evolutionText: e.target.value })}
+                  rows={10}
+                  className="mt-2"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-next-steps">Próximos Passos</Label>
+                <Textarea
+                  id="edit-next-steps"
+                  value={editDocument.nextSteps}
+                  onChange={(e) => setEditDocument({ ...editDocument, nextSteps: e.target.value })}
+                  rows={4}
+                  className="mt-2"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditDocument(null)}
+                  className="w-full sm:w-auto"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleEditSave}
+                  className="w-full sm:w-auto"
+                >
+                  Salvar Alterações
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
