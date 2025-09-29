@@ -41,11 +41,6 @@ const navItems = [
     icon: CreditCard,
   },
   {
-    name: "Profissionais",
-    href: "/profissionais",
-    icon: User,
-  },
-  {
     name: "Configurações",
     href: "/configuracoes",
     icon: Settings,
