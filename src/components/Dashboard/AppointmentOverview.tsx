@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Edit, CheckCircle } from "lucide-react";
+import { useState } from "react";
+import EditAppointmentDialog from "./EditAppointmentDialog";
+import FinishAppointmentDialog from "./FinishAppointmentDialog";
 
 type Appointment = {
   id: number;
@@ -64,14 +67,32 @@ const getStatusClass = (status: Appointment["status"]): string => {
 };
 
 const AppointmentOverview = () => {
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [finishDialogOpen, setFinishDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+
+  // Filtrar apenas agendamentos com status "Agendado"
+  const scheduledAppointments = appointments.filter(appointment => appointment.status === "Agendado");
+
+  const handleEditClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setEditDialogOpen(true);
+  };
+
+  const handleFinishClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setFinishDialogOpen(true);
+  };
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle>Próximos Agendamentos</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {appointments.map((appointment) => (
+    <>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle>Próximos Agendamentos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {scheduledAppointments.map((appointment) => (
             <div key={appointment.id} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0">
               <div className="flex items-center gap-4 flex-1">
                 <div className="text-center min-w-14">
@@ -88,20 +109,33 @@ const AppointmentOverview = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 ml-4">
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={() => handleEditClick(appointment)}>
                   <Edit className="h-4 w-4 mr-1" />
                   Editar Data
                 </Button>
-                <Button size="sm" variant="default">
+                <Button size="sm" variant="default" onClick={() => handleFinishClick(appointment)}>
                   <CheckCircle className="h-4 w-4 mr-1" />
                   Finalizar
                 </Button>
               </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <EditAppointmentDialog
+        isOpen={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        appointment={selectedAppointment}
+      />
+
+      <FinishAppointmentDialog
+        isOpen={finishDialogOpen}
+        onClose={() => setFinishDialogOpen(false)}
+        appointment={selectedAppointment}
+      />
+    </>
   );
 };
 
