@@ -9,6 +9,7 @@ import {
   Menu,
   User,
   Home,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,11 @@ const navItems = [
     name: "Pacientes",
     href: "/pacientes",
     icon: Users,
+  },
+  {
+    name: "Documentos",
+    href: "/documentos",
+    icon: FileText,
   },
   {
     name: "Faturamento",
