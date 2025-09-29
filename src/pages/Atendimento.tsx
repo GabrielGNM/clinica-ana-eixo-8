@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import Layout from "@/components/Layout/Layout";
 import {
@@ -11,7 +10,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -28,14 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, UserCheck, Play, CheckCircle2, X } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 
 type Appointment = {
   id: number;
   time: string;
   patientName: string;
-  professional: string;
-  status: "Agendado" | "Chegou" | "Em Atendimento" | "Finalizado" | "Faltou" | "Cancelado";
+  local: string;
+  tipoAtendimento: string;
+  status: "Agendado" | "Chegou" | "Em Atendimento" | "Finalizado" | "Faltou" | "Desmarcado" | "Atendido";
 };
 
 const appointments: Appointment[] = [
@@ -43,35 +44,40 @@ const appointments: Appointment[] = [
     id: 1,
     time: "09:00",
     patientName: "Ana Silva",
-    professional: "Dra. Carla Santos",
+    local: "Consultório 1",
+    tipoAtendimento: "Psicologia",
     status: "Agendado"
   },
   {
     id: 2,
     time: "10:00",
     patientName: "Roberto Ferreira",
-    professional: "Dr. Marcos Oliveira",
+    local: "Consultório 2",
+    tipoAtendimento: "Fisioterapia",
     status: "Chegou"
   },
   {
     id: 3,
     time: "11:00",
     patientName: "Juliana Martins",
-    professional: "Dra. Carla Santos",
+    local: "Consultório 1",
+    tipoAtendimento: "Psicologia",
     status: "Em Atendimento"
   },
   {
     id: 4,
     time: "13:30",
     patientName: "Pedro Costa",
-    professional: "Dr. Marcos Oliveira",
+    local: "Consultório 3",
+    tipoAtendimento: "Nutrição",
     status: "Agendado"
   },
   {
     id: 5,
     time: "15:00",
     patientName: "Maria Souza",
-    professional: "Dra. Carla Santos",
+    local: "Consultório 1",
+    tipoAtendimento: "Psicologia",
     status: "Agendado"
   }
 ];
@@ -86,24 +92,62 @@ const getStatusBadge = (status: Appointment["status"]) => {
       return <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">Em Atendimento</Badge>;
     case "Finalizado":
       return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Finalizado</Badge>;
+    case "Atendido":
+      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Atendido</Badge>;
     case "Faltou":
       return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Faltou</Badge>;
-    case "Cancelado":
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelado</Badge>;
+    case "Desmarcado":
+      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Desmarcado</Badge>;
     default:
       return <Badge variant="outline">Desconhecido</Badge>;
   }
 };
 
 const Atendimento = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState<"finalize" | "checkin" | "start" | "miss">("finalize");
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  
-  const handleAction = (appointment: Appointment, action: "checkin" | "start" | "finalize" | "miss") => {
-    setSelectedAppointment(appointment);
-    setDialogType(action);
-    setIsDialogOpen(true);
+  const [selectedAppointments, setSelectedAppointments] = useState<number[]>([]);
+  const [showBatchDialog, setShowBatchDialog] = useState(false);
+  const [batchAction, setBatchAction] = useState<string>("");
+  const [batchReason, setBatchReason] = useState<string>("");
+  const [batchNotes, setBatchNotes] = useState<string>("");
+  const [appointmentStatuses, setAppointmentStatuses] = useState<Record<number, Appointment["status"]>>(
+    appointments.reduce((acc, apt) => ({ ...acc, [apt.id]: apt.status }), {})
+  );
+
+  const handleCheckboxChange = (appointmentId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedAppointments(prev => [...prev, appointmentId]);
+    } else {
+      setSelectedAppointments(prev => prev.filter(id => id !== appointmentId));
+    }
+  };
+
+  const handleFinalizarClick = () => {
+    setShowBatchDialog(true);
+  };
+
+  const handleBatchSubmit = () => {
+    const newStatuses = { ...appointmentStatuses };
+    
+    selectedAppointments.forEach(id => {
+      if (batchAction === "Atendido") {
+        newStatuses[id] = "Atendido";
+      } else if (batchAction === "Desmarcado") {
+        newStatuses[id] = "Desmarcado";
+      } else if (batchAction === "Falta") {
+        newStatuses[id] = "Faltou";
+      }
+    });
+
+    setAppointmentStatuses(newStatuses);
+    setSelectedAppointments([]);
+    setShowBatchDialog(false);
+    setBatchAction("");
+    setBatchReason("");
+    setBatchNotes("");
+  };
+
+  const getSelectedAppointments = () => {
+    return appointments.filter(apt => selectedAppointments.includes(apt.id));
   };
 
   return (
@@ -123,16 +167,23 @@ const Atendimento = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]"></TableHead>
                 <TableHead className="w-[100px]">Horário</TableHead>
                 <TableHead>Paciente</TableHead>
-                <TableHead>Profissional</TableHead>
+                <TableHead>Local</TableHead>
+                <TableHead>Tipo de Atendimento</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {appointments.map((appointment) => (
                 <TableRow key={appointment.id}>
+                  <TableCell>
+                    <Checkbox 
+                      checked={selectedAppointments.includes(appointment.id)}
+                      onCheckedChange={(checked) => handleCheckboxChange(appointment.id, checked as boolean)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
@@ -140,158 +191,104 @@ const Atendimento = () => {
                     </div>
                   </TableCell>
                   <TableCell>{appointment.patientName}</TableCell>
-                  <TableCell>{appointment.professional}</TableCell>
-                  <TableCell>{getStatusBadge(appointment.status)}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {appointment.status === "Agendado" && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="flex items-center gap-1 text-green-700 border-green-200 hover:bg-green-50"
-                          onClick={() => handleAction(appointment, "checkin")}
-                        >
-                          <UserCheck className="h-4 w-4" />
-                          <span>Check-in</span>
-                        </Button>
-                      )}
-                      
-                      {appointment.status === "Chegou" && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="flex items-center gap-1 text-purple-700 border-purple-200 hover:bg-purple-50"
-                          onClick={() => handleAction(appointment, "start")}
-                        >
-                          <Play className="h-4 w-4" />
-                          <span>Iniciar</span>
-                        </Button>
-                      )}
-                      
-                      {appointment.status === "Em Atendimento" && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="flex items-center gap-1 text-green-700 border-green-200 hover:bg-green-50"
-                          onClick={() => handleAction(appointment, "finalize")}
-                        >
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>Finalizar</span>
-                        </Button>
-                      )}
-                      
-                      {(appointment.status === "Agendado") && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="flex items-center gap-1 text-red-700 border-red-200 hover:bg-red-50"
-                          onClick={() => handleAction(appointment, "miss")}
-                        >
-                          <X className="h-4 w-4" />
-                          <span>Faltou</span>
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+                  <TableCell>{appointment.local}</TableCell>
+                  <TableCell>{appointment.tipoAtendimento}</TableCell>
+                  <TableCell>{getStatusBadge(appointmentStatuses[appointment.id] || appointment.status)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+
+        <div className="flex justify-end">
+          <Button 
+            onClick={handleFinalizarClick}
+            disabled={selectedAppointments.length === 0}
+            className="bg-clinic-teal hover:bg-clinic-teal/90"
+          >
+            Finalizar ({selectedAppointments.length})
+          </Button>
+        </div>
       </div>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+      <Dialog open={showBatchDialog} onOpenChange={setShowBatchDialog}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {dialogType === "finalize" && "Finalizar Atendimento"}
-              {dialogType === "checkin" && "Realizar Check-in"}
-              {dialogType === "start" && "Iniciar Atendimento"}
-              {dialogType === "miss" && "Marcar Falta"}
-            </DialogTitle>
+            <DialogTitle>Finalizar Atendimentos</DialogTitle>
             <DialogDescription>
-              {dialogType === "finalize" && "Registre a evolução/notas da sessão e finalize o atendimento"}
-              {dialogType === "checkin" && "Confirme a chegada do paciente"}
-              {dialogType === "start" && "Iniciar a sessão com o paciente"}
-              {dialogType === "miss" && "Confirme a falta do paciente"}
+              Selecione a ação para os atendimentos selecionados
             </DialogDescription>
           </DialogHeader>
           
-          {selectedAppointment && (
-            <div className="py-4">
-              <div className="mb-4">
-                <p><strong>Paciente:</strong> {selectedAppointment.patientName}</p>
-                <p><strong>Profissional:</strong> {selectedAppointment.professional}</p>
-                <p><strong>Horário:</strong> {selectedAppointment.time}</p>
-              </div>
-              
-              {dialogType === "finalize" && (
-                <div className="space-y-4">
-                  <div className="grid w-full gap-1.5">
-                    <label htmlFor="session-notes" className="text-sm font-medium">
-                      Evolução/Notas da Sessão
-                    </label>
-                    <Textarea
-                      id="session-notes"
-                      placeholder="Descreva os detalhes sobre o atendimento realizado..."
-                      className="min-h-32"
-                    />
-                  </div>
-                  
-                  <div className="grid w-full gap-1.5">
-                    <label htmlFor="next-steps" className="text-sm font-medium">
-                      Próximos Passos
-                    </label>
-                    <Textarea
-                      id="next-steps"
-                      placeholder="Observações para próximas sessões, recomendações..."
-                    />
-                  </div>
+          <div className="py-4 space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Atendimentos Selecionados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {getSelectedAppointments().map(apt => (
+                    <div key={apt.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span className="font-medium">{apt.patientName}</span>
+                      <span className="text-sm text-muted-foreground">{apt.time}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
-              
-              {dialogType === "miss" && (
-                <div className="space-y-4">
-                  <div className="grid w-full gap-1.5">
-                    <label htmlFor="miss-reason" className="text-sm font-medium">
-                      Motivo da Falta
-                    </label>
-                    <Select>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o motivo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="no-notification">Sem notificação prévia</SelectItem>
-                        <SelectItem value="health">Problema de saúde</SelectItem>
-                        <SelectItem value="transportation">Problemas de transporte</SelectItem>
-                        <SelectItem value="other">Outro motivo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid w-full gap-1.5">
-                    <label htmlFor="miss-notes" className="text-sm font-medium">
-                      Observações
-                    </label>
-                    <Textarea
-                      id="miss-notes"
-                      placeholder="Informações adicionais sobre a falta..."
-                    />
-                  </div>
-                </div>
-              )}
+              </CardContent>
+            </Card>
+
+            <div className="grid w-full gap-1.5">
+              <label className="text-sm font-medium">Ação Desejada</label>
+              <Select value={batchAction} onValueChange={setBatchAction}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a ação" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Atendido">Atendido</SelectItem>
+                  <SelectItem value="Desmarcado">Desmarcado</SelectItem>
+                  <SelectItem value="Falta">Falta</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            {(batchAction === "Desmarcado" || batchAction === "Falta") && (
+              <div className="grid w-full gap-1.5">
+                <label className="text-sm font-medium">Motivo</label>
+                <Select value={batchReason} onValueChange={setBatchReason}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sem Notificação Prévia">Sem Notificação Prévia</SelectItem>
+                    <SelectItem value="Problema de Saúde">Problema de Saúde</SelectItem>
+                    <SelectItem value="Problema de Transporte">Problema de Transporte</SelectItem>
+                    <SelectItem value="Outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {batchReason === "Outros" && (
+              <div className="grid w-full gap-1.5">
+                <label className="text-sm font-medium">Especifique o motivo</label>
+                <Textarea
+                  value={batchNotes}
+                  onChange={(e) => setBatchNotes(e.target.value)}
+                  placeholder="Descreva o motivo..."
+                />
+              </div>
+            )}
+          </div>
           
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setShowBatchDialog(false)}>
               Cancelar
             </Button>
-            <Button type="submit">
-              {dialogType === "finalize" && "Finalizar Atendimento"}
-              {dialogType === "checkin" && "Confirmar Check-in"}
-              {dialogType === "start" && "Iniciar Atendimento"}
-              {dialogType === "miss" && "Confirmar Falta"}
+            <Button 
+              onClick={handleBatchSubmit}
+              disabled={!batchAction || ((batchAction === "Desmarcado" || batchAction === "Falta") && !batchReason)}
+            >
+              Confirmar
             </Button>
           </DialogFooter>
         </DialogContent>
