@@ -61,7 +61,7 @@ const Sidebar = () => {
 
   if (isMobile) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-bottom">
         <nav className="flex justify-around items-center py-2 px-2">
           {navItems.map((item) => (
             <Link
@@ -88,11 +88,11 @@ const Sidebar = () => {
   return (
     <div
       className={cn(
-        "bg-white border-r border-gray-200 h-screen transition-all duration-300",
+        "bg-background border-r border-border h-screen transition-all duration-300",
         collapsed ? "w-20" : "w-64"
       )}
     >
-      <div className="flex items-center p-4 border-b border-gray-200 h-16">
+      <div className="flex items-center p-4 border-b border-border h-16">
         {!collapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-clinic-teal flex items-center justify-center">
