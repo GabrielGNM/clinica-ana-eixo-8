@@ -93,13 +93,13 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    /* Clinic colors for dark mode */
-    --clinic-teal: 177 48% 42%;
-    --clinic-green: 122 39% 49%;
-    --clinic-blue: 207 90% 54%;
-    --clinic-yellow: 45 100% 51%;
-    --clinic-red: 4 90% 58%;
-    --clinic-gray: 0 0% 46%;
+    /* Clinic colors for dark mode - increased lightness for better contrast */
+    --clinic-teal: 177 48% 60%;
+    --clinic-green: 122 39% 65%;
+    --clinic-blue: 207 90% 70%;
+    --clinic-yellow: 45 100% 65%;
+    --clinic-red: 4 90% 70%;
+    --clinic-gray: 0 0% 60%;
     --clinic-light-bg: 222.2 47.4% 11.2%;
   }
 }

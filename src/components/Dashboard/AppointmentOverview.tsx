@@ -93,7 +93,7 @@ const AppointmentOverview = () => {
         <CardContent>
           <div className="space-y-4">
             {scheduledAppointments.map((appointment) => (
-            <div key={appointment.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0 gap-3">
+            <div key={appointment.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0 gap-3">
               <div className="flex items-center gap-4 flex-1">
                 <div className="text-center min-w-14">
                   <span className="font-bold text-primary">{appointment.time}</span>
