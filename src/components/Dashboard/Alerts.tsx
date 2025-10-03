@@ -47,13 +47,13 @@ const getAlertIcon = (type: Alert["type"]) => {
 const getSeverityClass = (severity: Alert["severity"]) => {
   switch (severity) {
     case "high":
-      return "bg-red-100 text-red-800";
+      return "bg-clinic-red/10 text-clinic-red dark:bg-clinic-red/20";
     case "medium":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-clinic-yellow/10 text-clinic-yellow dark:bg-clinic-yellow/20";
     case "low":
-      return "bg-blue-100 text-blue-800";
+      return "bg-clinic-blue/10 text-clinic-blue dark:bg-clinic-blue/20";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-muted text-muted-foreground";
   }
 };
 

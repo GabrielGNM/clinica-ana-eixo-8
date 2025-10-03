@@ -88,7 +88,7 @@ const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
           <Input 
             placeholder="Buscar paciente..." 
             className="pl-10"
@@ -102,7 +102,7 @@ const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
         </Button>
       </div>
       
-      <div className="border rounded-lg overflow-hidden bg-white">
+      <div className="border rounded-lg overflow-hidden bg-card">
         <Table>
           <TableHeader>
             <TableRow>

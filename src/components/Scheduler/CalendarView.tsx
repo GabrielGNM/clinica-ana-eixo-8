@@ -68,7 +68,7 @@ const CalendarView = ({ onAppointmentClick }: CalendarViewProps) => {
   };
 
   return (
-    <div className="border rounded-lg bg-white overflow-hidden">
+    <div className="border rounded-lg bg-card overflow-hidden">
       <div className="p-4 border-b flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="icon" onClick={() => changeWeek('prev')}>
@@ -114,7 +114,7 @@ const CalendarView = ({ onAppointmentClick }: CalendarViewProps) => {
                 key={idx} 
                 className={cn(
                   "py-2 px-4 text-center border-l",
-                  date.toDateString() === new Date().toDateString() ? "bg-blue-50" : ""
+                  date.toDateString() === new Date().toDateString() ? "bg-primary/10" : ""
                 )}
               >
                 <div className="font-medium">{DAYS_OF_WEEK[idx]}</div>
@@ -141,7 +141,7 @@ const CalendarView = ({ onAppointmentClick }: CalendarViewProps) => {
                       key={day}
                       className={cn(
                         "p-1 min-h-16 border-l relative",
-                        weekDates[day].toDateString() === new Date().toDateString() ? "bg-blue-50" : ""
+                        weekDates[day].toDateString() === new Date().toDateString() ? "bg-primary/10" : ""
                       )}
                       onClick={() => onAppointmentClick(appointment?.id || null, day, hour)}
                     >
@@ -149,14 +149,14 @@ const CalendarView = ({ onAppointmentClick }: CalendarViewProps) => {
                         <div 
                           className={cn(
                             "h-full rounded p-1 text-xs cursor-pointer hover:opacity-80",
-                            appointment.status === "Agendado" ? "bg-blue-100 text-blue-800" : ""
+                            appointment.status === "Agendado" ? "bg-clinic-blue/10 text-clinic-blue dark:bg-clinic-blue/20" : ""
                           )}
                         >
                           <div className="font-medium">{appointment.patient}</div>
                           <div className="text-xs opacity-80">{appointment.professional}</div>
                         </div>
                       ) : (
-                        <div className="h-full rounded p-1 text-xs border border-dashed border-gray-200 cursor-pointer hover:bg-gray-50 flex items-center justify-center">
+                        <div className="h-full rounded p-1 text-xs border border-dashed border-border cursor-pointer hover:bg-muted/50 flex items-center justify-center">
                           <span className="sr-only">Novo agendamento</span>
                         </div>
                       )}

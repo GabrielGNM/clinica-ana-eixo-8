@@ -85,19 +85,19 @@ const appointments: Appointment[] = [
 const getStatusBadge = (status: Appointment["status"]) => {
   switch (status) {
     case "Agendado":
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">Agendado</Badge>;
+      return <Badge variant="outline" className="bg-clinic-blue/10 text-clinic-blue dark:bg-clinic-blue/20 hover:bg-clinic-blue/10">Agendado</Badge>;
     case "Chegou":
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Chegou</Badge>;
+      return <Badge variant="outline" className="bg-clinic-yellow/10 text-clinic-yellow dark:bg-clinic-yellow/20 hover:bg-clinic-yellow/10">Chegou</Badge>;
     case "Em Atendimento":
-      return <Badge variant="outline" className="bg-purple-100 text-purple-800 hover:bg-purple-100">Em Atendimento</Badge>;
+      return <Badge variant="outline" className="bg-primary/10 text-primary dark:bg-primary/20 hover:bg-primary/10">Em Atendimento</Badge>;
     case "Finalizado":
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Finalizado</Badge>;
+      return <Badge variant="outline" className="bg-clinic-green/10 text-clinic-green dark:bg-clinic-green/20 hover:bg-clinic-green/10">Finalizado</Badge>;
     case "Atendido":
-      return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">Atendido</Badge>;
+      return <Badge variant="outline" className="bg-clinic-green/10 text-clinic-green dark:bg-clinic-green/20 hover:bg-clinic-green/10">Atendido</Badge>;
     case "Faltou":
-      return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">Faltou</Badge>;
+      return <Badge variant="outline" className="bg-clinic-red/10 text-clinic-red dark:bg-clinic-red/20 hover:bg-clinic-red/10">Faltou</Badge>;
     case "Desmarcado":
-      return <Badge variant="outline" className="bg-gray-100 text-gray-800 hover:bg-gray-100">Desmarcado</Badge>;
+      return <Badge variant="outline" className="bg-muted text-muted-foreground hover:bg-muted">Desmarcado</Badge>;
     default:
       return <Badge variant="outline">Desconhecido</Badge>;
   }
@@ -158,7 +158,7 @@ const Atendimento = () => {
       </div>
 
       <div className="grid gap-6">
-        <div className="border rounded-lg overflow-hidden bg-white">
+        <div className="border rounded-lg overflow-hidden bg-card">
           <div className="p-3 sm:p-4 border-b flex items-center gap-2">
             <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-clinic-teal" />
             <h2 className="text-sm sm:text-base font-semibold">Atendimentos de Hoje</h2>
@@ -230,7 +230,7 @@ const Atendimento = () => {
               <CardContent>
                 <div className="space-y-2">
                   {getSelectedAppointments().map(apt => (
-                    <div key={apt.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <div key={apt.id} className="flex justify-between items-center p-2 bg-muted/50 rounded">
                       <span className="font-medium">{apt.patientName}</span>
                       <span className="text-sm text-muted-foreground">{apt.time}</span>
                     </div>

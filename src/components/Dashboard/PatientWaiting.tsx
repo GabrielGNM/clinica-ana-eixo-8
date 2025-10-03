@@ -38,10 +38,10 @@ const PatientWaiting = () => {
         {waitingPatients.length > 0 ? (
           <div className="space-y-4">
             {waitingPatients.map((patient) => (
-              <div key={patient.id} className="flex justify-between items-center border-b border-gray-100 pb-3 last:border-0 last:pb-0">
+              <div key={patient.id} className="flex justify-between items-center border-b border-border pb-3 last:border-0 last:pb-0">
                 <div>
                   <p className="font-medium">{patient.name}</p>
-                  <p className="text-sm text-gray-500">{patient.professional}</p>
+                  <p className="text-sm text-muted-foreground">{patient.professional}</p>
                 </div>
                 <div className="flex flex-col items-end">
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
