@@ -20,50 +20,50 @@ const Index = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card className="bg-white">
+        <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Agendamentos Hoje</p>
-              <p className="text-2xl font-bold">12</p>
+              <p className="text-2xl font-bold text-card-foreground">12</p>
             </div>
-            <div className="p-2 rounded-full bg-blue-100">
-              <CalendarDays className="h-6 w-6 text-blue-600" />
+            <div className="p-2 rounded-full bg-clinic-blue/10">
+              <CalendarDays className="h-6 w-6 text-clinic-blue" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Atendimentos Realizados</p>
-              <p className="text-2xl font-bold">5</p>
+              <p className="text-2xl font-bold text-card-foreground">5</p>
             </div>
-            <div className="p-2 rounded-full bg-green-100">
-              <ClipboardCheck className="h-6 w-6 text-green-600" />
+            <div className="p-2 rounded-full bg-clinic-green/10">
+              <ClipboardCheck className="h-6 w-6 text-clinic-green" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Pacientes Ativos</p>
-              <p className="text-2xl font-bold">142</p>
+              <p className="text-2xl font-bold text-card-foreground">142</p>
             </div>
-            <div className="p-2 rounded-full bg-purple-100">
-              <Users className="h-6 w-6 text-purple-600" />
+            <div className="p-2 rounded-full bg-primary/10">
+              <Users className="h-6 w-6 text-primary" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-white">
+        <Card>
           <CardContent className="p-6 flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Progresso do Dia</p>
-              <p className="text-2xl font-bold">78%</p>
+              <p className="text-2xl font-bold text-card-foreground">78%</p>
             </div>
-            <div className="p-2 rounded-full bg-amber-100">
-              <Activity className="h-6 w-6 text-amber-600" />
+            <div className="p-2 rounded-full bg-clinic-yellow/10">
+              <Activity className="h-6 w-6 text-clinic-yellow" />
             </div>
           </CardContent>
         </Card>
