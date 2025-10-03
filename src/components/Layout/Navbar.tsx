@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Moon, Sun, User } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,14 +15,23 @@ import {
 const Navbar = () => {
   const [notifications] = useState(3);
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
     navigate("/login");
   };
 
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+
   return (
-    <div className="bg-white h-16 flex items-center justify-end px-4 sm:px-6 border-b border-gray-200">
+    <div className="bg-background h-16 flex items-center justify-end px-4 sm:px-6 border-b border-border">
       <div className="flex items-center gap-2 sm:gap-4">
+        <Button variant="ghost" size="icon" onClick={toggleTheme}>
+          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+        </Button>
+
         <div className="relative">
           <Button variant="ghost" size="icon" className="relative">
             <Bell size={20} />
