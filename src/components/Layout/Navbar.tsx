@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Bell, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,12 +14,8 @@ import {
 
 const Navbar = () => {
   const [notifications] = useState(3);
-  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-
-  const handleLogout = () => {
-    navigate("/login");
-  };
+  const { logout } = useAuth();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -55,7 +51,7 @@ const Navbar = () => {
             <DropdownMenuItem>Perfil</DropdownMenuItem>
             <DropdownMenuItem>Configurações</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Sair</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>Sair</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

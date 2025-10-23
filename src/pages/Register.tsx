@@ -41,7 +41,7 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch("https://localhost:7084/api/Auth/register", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,15 +60,18 @@ const Register = () => {
         
         // Redireciona para login após 2 segundos
         setTimeout(() => {
-          navigate("/login");
+          navigate("/");
         }, 2000);
         
       } else {
-        const errorData = await response.json();
+        let errorText = await response.text();
+        if (errorText === "Email already exists.") {
+          errorText = "Email já possui uma conta vinculada.";
+        }
         toast({
           variant: "destructive",
           title: "Erro no cadastro",
-          description: errorData.message || "Não foi possível criar a conta",
+          description: errorText || "Não foi possível criar a conta",
         });
       }
     } catch (error) {

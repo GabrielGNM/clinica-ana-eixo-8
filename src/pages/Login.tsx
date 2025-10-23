@@ -38,7 +38,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch("https://localhost:7084/api/Auth/login", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,22 +51,22 @@ const Login = () => {
 
       if (response.ok) {
         const result = await response.json();
-        
+
         // Salva o token
-        if (result.token) {
-          login(result.token);
+        if (result.accessToken) {
+          login(result.accessToken);
+          toast({
+            title: "Login realizado com sucesso",
+            description: "Você será redirecionado em breve.",
+          });
+        } else {
+          // Handle case where accessToken is missing
+          toast({
+            variant: "destructive",
+            title: "Erro no login",
+            description: "Não foi possível obter o token de autenticação.",
+          });
         }
-        
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Você será redirecionado em breve.",
-        });
-        
-        // Redireciona para a home
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
-        
       } else {
         const errorData = await response.json();
         toast({

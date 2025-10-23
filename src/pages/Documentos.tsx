@@ -87,7 +87,7 @@ const Documentos = () => {
 
       try {
         // Placeholder: Em produção, buscar documentos da API
-        // const response = await fetch("https://localhost:7084/api/Documents", {
+        // const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Documents`, {
         //   headers: {
         //     "Authorization": `Bearer ${token}`
         //   }

@@ -5,9 +5,12 @@ import Layout from "@/components/Layout/Layout";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NotFound = () => {
   const location = useLocation();
+  const { isAuthenticated } = useAuth();
+  const homePath = isAuthenticated ? "/dashboard" : "/";
 
   useEffect(() => {
     console.error(
@@ -23,7 +26,7 @@ const NotFound = () => {
           <h1 className="text-9xl font-bold text-clinic-teal mb-4">404</h1>
           <p className="text-xl text-muted-foreground mb-8">Oops! Página não encontrada</p>
           <Button asChild>
-            <Link to="/" className="flex items-center gap-2">
+            <Link to={homePath} className="flex items-center gap-2">
               <ArrowLeft className="h-4 w-4" />
               Voltar ao Início
             </Link>
