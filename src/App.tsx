@@ -10,6 +10,8 @@ import Agendamento from "./pages/Agendamento";
 import Atendimento from "./pages/Atendimento";
 import Pacientes from "./pages/Pacientes";
 import Documentos from "./pages/Documentos";
+import Faturamento from "./pages/Faturamento";
+import NovoFaturamento from "./pages/NovoFaturamento";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -27,15 +29,17 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Index />} />
               <Route path="/agendamento" element={<Agendamento />} />
               <Route path="/atendimento" element={<Atendimento />} />
               <Route path="/pacientes" element={<Pacientes />} />
               <Route path="/documentos" element={<Documentos />} />
+              <Route path="/faturamento" element={<Faturamento />} />
+              <Route path="/faturamento/novo" element={<NovoFaturamento />} />
             </Route>
-            
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

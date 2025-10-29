@@ -19,7 +19,7 @@ import logo from "@/assets/logo.png";
 const navItems = [
   {
     name: "Painel Inicial",
-    href: "/",
+    href: "/dashboard",
     icon: Home,
   },
   {
@@ -46,11 +46,6 @@ const navItems = [
     name: "Faturamento",
     href: "/faturamento",
     icon: CreditCard,
-  },
-  {
-    name: "Configurações",
-    href: "/configuracoes",
-    icon: Settings,
   },
 ];
 
