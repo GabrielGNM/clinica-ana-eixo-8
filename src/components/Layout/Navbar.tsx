@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bell, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ const Navbar = () => {
   const [notifications] = useState(3);
   const { theme, setTheme } = useTheme();
   const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -48,8 +50,8 @@ const Navbar = () => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Perfil</DropdownMenuItem>
-            <DropdownMenuItem>Configurações</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/configuracoes')}>Perfil</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/configuracoes')}>Configurações</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>Sair</DropdownMenuItem>
           </DropdownMenuContent>
