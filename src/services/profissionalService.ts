@@ -24,6 +24,10 @@ export const getProfissionalById = (id: string): Promise<ProfissionalDto> => {
   return client<ProfissionalDto>(`${API_PREFIX}/${id}`, {});
 };
 
+export const getProfissionalByUserId = (userId: string): Promise<ProfissionalDto> => {
+  return client<ProfissionalDto>(`${API_PREFIX}/user/${userId}`, {});
+};
+
 export const deleteProfissional = (id: string): Promise<void> => {
   return client<void>(`${API_PREFIX}/${id}`, { method: 'DELETE' });
 };

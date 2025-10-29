@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format } from "date-fns";
 import Layout from "@/components/Layout/Layout";
 import CalendarView from "@/components/Scheduler/CalendarView";
 import { Button } from "@/components/ui/button";
@@ -28,10 +29,12 @@ import {
   createAgendamento,
   updateAgendamento,
   getAgendamentoById,
+  getAgendamentosByProfissional,
 } from "@/services/agendamentoService";
 import { getPacientes } from "@/services/pacienteService";
-import { getProfissionais } from "@/services/profissionalService";
-import { AgendamentoDto, PacienteDto, ProfissionalDto, EnumTipoAtendimento } from "@/types/api";
+import { getProfissionais, getProfissionalByUserId } from "@/services/profissionalService";
+import { AgendamentoDto, PacienteDto, ProfissionalDto, EnumTipoAtendimento, Role } from "@/types/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const agendamentoSchema = z.object({
   pacienteId: z.string().nonempty({ message: "Paciente é obrigatório" }),
@@ -51,6 +54,7 @@ const Agendamento = () => {
   const [profissionais, setProfissionais] = useState<ProfissionalDto[]>([]);
   const [selectedAgendamento, setSelectedAgendamento] = useState<AgendamentoDto | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const {
     register,
@@ -62,59 +66,77 @@ const Agendamento = () => {
     resolver: zodResolver(agendamentoSchema),
   });
 
-  const fetchData = async () => {
-    try {
-      const [agendamentosData, pacientesData, profissionaisData] = await Promise.all([
-        getAgendamentos(),
-        getPacientes(),
-        getProfissionais(),
-      ]);
-      setAgendamentos(agendamentosData);
-      setPacientes(pacientesData);
-      setProfissionais(profissionaisData);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao buscar dados",
-        description: "Não foi possível buscar os dados necessários para a página.",
-      });
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!user) return;
+
+        const pacientesData = await getPacientes();
+        setPacientes(pacientesData);
+
+        if (user.role === Role.Gerencia) {
+          const [agendamentosData, profissionaisData] = await Promise.all([
+            getAgendamentos(),
+            getProfissionais(),
+          ]);
+          setAgendamentos(agendamentosData);
+          setProfissionais(profissionaisData);
+        } else {
+          const profissional = await getProfissionalByUserId(user.id);
+          if (profissional) {
+            const agendamentosData = await getAgendamentosByProfissional(profissional.id!);
+            setAgendamentos(agendamentosData);
+            setProfissionais([profissional]);
+            setValue("profissionalId", profissional.id!);
+          }
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao buscar dados",
+          description: "Não foi possível buscar os dados necessários para a página.",
+        });
+      }
+    };
+
     fetchData();
-  }, []);
+  }, [user, toast, setValue]);
 
   const handleAppointmentClick = async (appointmentId: string | null, date: Date) => {
     if (appointmentId) {
       try {
         const agendamento = await getAgendamentoById(appointmentId);
+        const formattedDate = format(new Date(agendamento.dataHora), "yyyy-MM-dd'T'HH:mm");
         setSelectedAgendamento(agendamento);
         setDialogType("edit");
-        reset(agendamento);
+        reset({ ...agendamento, dataHora: formattedDate });
         setIsDialogOpen(true);
       } catch (error) {
         toast({ variant: "destructive", title: "Erro", description: "Agendamento não encontrado" });
       }
     } else {
+      const formattedDate = format(date, "yyyy-MM-dd'T'HH:mm");
       setDialogType("new");
       setSelectedAgendamento(null);
-      reset({ pacienteId: '', profissionalId: '', dataHora: date.toISOString(), tipoAtendimento: EnumTipoAtendimento.CONSULTA, observacoes: '' });
+      reset({ pacienteId: '', profissionalId: user?.role === Role.Profissional ? profissionais[0]?.id : '', dataHora: formattedDate, tipoAtendimento: EnumTipoAtendimento.AtendimentoExterno, observacoes: '' });
       setIsDialogOpen(true);
     }
   };
   
   const onSubmit = async (data: AgendamentoFormData) => {
     try {
+      const utcDate = new Date(data.dataHora).toISOString();
+      const dataWithUtcDate = { ...data, dataHora: utcDate };
+
       if (dialogType === "new") {
-        await createAgendamento(data);
+        await createAgendamento(dataWithUtcDate);
         toast({ title: "Agendamento criado com sucesso" });
       } else if (selectedAgendamento) {
-        await updateAgendamento({ ...selectedAgendamento, ...data });
+        await updateAgendamento({ ...selectedAgendamento, ...dataWithUtcDate });
         toast({ title: "Agendamento atualizado com sucesso" });
       }
       setIsDialogOpen(false);
-      fetchData();
+      // fetchData();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -169,7 +191,7 @@ const Agendamento = () => {
             
             <div className="grid grid-cols-1 gap-2">
               <label htmlFor="profissionalId" className="text-sm font-medium">Profissional</label>
-              <Select onValueChange={(value) => setValue('profissionalId', value)} defaultValue={selectedAgendamento?.profissionalId}>
+              <Select onValueChange={(value) => setValue('profissionalId', value)} defaultValue={selectedAgendamento?.profissionalId} disabled={user?.role === Role.Profissional}>
                 <SelectTrigger><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
                 <SelectContent>
                   {profissionais.map(p => <SelectItem key={p.id} value={p.id!}>{p.nomeCompleto}</SelectItem>)}

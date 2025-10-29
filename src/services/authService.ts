@@ -4,6 +4,7 @@ import type {
   TokenResponseDto,
   SendEmailResetPasswordDto,
   ResetPasswordDto,
+  User,
 } from '../types/api';
 import client from './apiClient';
 
@@ -34,8 +35,8 @@ export const resetPassword = (
   });
 };
 
-export const getAuth = (): Promise<any> => {
-  return client<any>(API_PREFIX, {});
+export const getAuth = (): Promise<User> => {
+  return client<User>(API_PREFIX, {});
 };
 
 export const getAdminOnly = (): Promise<any> => {

@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { getAuth, login as loginService } from "@/services/authService";
-import { UserDto } from "@/types/api";
+import { UserDto, User } from "@/types/api";
 
 interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  user: User | null;
   login: (data: UserDto) => Promise<void>;
   logout: () => void;
   validateToken: () => Promise<boolean>;
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
@@ -23,14 +25,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const validateStoredToken = async () => {
-      const storedToken = localStorage.getItem("token");
+      const storedToken = sessionStorage.getItem("token");
       if (storedToken) {
         try {
-          await getAuth();
+          const userData = await getAuth();
           setToken(storedToken);
+          setUser(userData);
           setIsAuthenticated(true);
         } catch (error) {
-          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
         }
       }
       setIsLoading(false);
@@ -47,26 +50,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (data: UserDto) => {
     const response = await loginService(data);
-    if (response.accessToken) {
-      localStorage.setItem("token", response.accessToken);
+    if (response.accessToken && response.user) {
+      sessionStorage.setItem("token", response.accessToken);
       setToken(response.accessToken);
+      setUser(response.user);
       setIsAuthenticated(true);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setToken(null);
+    setUser(null);
     setIsAuthenticated(false);
     navigate("/");
   };
 
   const validateToken = async (): Promise<boolean> => {
-    const currentToken = localStorage.getItem("token");
+    const currentToken = sessionStorage.getItem("token");
     if (!currentToken) return false;
 
     try {
-      await getAuth();
+      const userData = await getAuth();
+      setUser(userData);
       return true;
     } catch (error) {
       return false;
@@ -75,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, isAuthenticated, isLoading, login, logout, validateToken }}
+      value={{ token, isAuthenticated, isLoading, user, login, logout, validateToken }}
     >
       {children}
     </AuthContext.Provider>

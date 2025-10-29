@@ -12,7 +12,7 @@ async function client<T>(endpoint: string, {
   ...customConfig
 }: RequestInit & { data?: unknown } = {}): Promise<T> {
 
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   const headers: HeadersInit = {
     'Content-Type': data ? 'application/json' : ''
   };
