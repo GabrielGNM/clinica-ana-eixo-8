@@ -64,12 +64,10 @@ export const calcularEstatisticas = (faturamentos: FaturamentoDto[]) => {
     const totalPendente = faturamentos
         .filter(item => item.status === EnumStatusFaturamento.Rascunho)
         .reduce((acc, item) => acc + item.valorTotal, 0);
-    const taxaRecebimento = totalFaturado > 0 ? Math.round((totalPago / totalFaturado) * 100) : 0;
 
     return {
         totalFaturado,
         totalPago,
-        totalPendente,
-        taxaRecebimento
+        totalPendente
     };
 };

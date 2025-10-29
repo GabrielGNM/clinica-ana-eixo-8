@@ -105,10 +105,7 @@ const Dashboard = () => {
                 dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
         }
 
-        return faturamentos.filter(fat => {
-            const dataFaturamento = new Date(fat.dataFaturamento);
-            return dataFaturamento >= dataInicio;
-        });
+        return faturamentos.filter(fat => new Date(fat.dataFaturamento) >= dataInicio);
     };
 
     const faturamentosFiltrados = getFaturamentosPorPeriodo();
@@ -117,31 +114,36 @@ const Dashboard = () => {
     const getDadosEvolucao = () => {
         const dados = faturamentosFiltrados.reduce((acc, fat) => {
             const data = format(new Date(fat.dataFaturamento), 'dd/MM', { locale: ptBR });
-            if (!acc[data]) {
-                acc[data] = { data, total: 0, pago: 0, pendente: 0 };
-            }
-            acc[data].total += fat.valorTotal;
-            if (fat.status === EnumStatusFaturamento.Pago) {
-                acc[data].pago += fat.valorTotal;
-            } else if (fat.status === EnumStatusFaturamento.Rascunho) {
-                acc[data].pendente += fat.valorTotal;
+            const existing = acc.find(item => item.data === data);
+
+            if (existing) {
+                existing.total += fat.valorTotal;
+                if (fat.status === EnumStatusFaturamento.Pago) {
+                    existing.pago += fat.valorTotal;
+                }
+                if (fat.status === EnumStatusFaturamento.Rascunho) {
+                    existing.pendente += fat.valorTotal;
+                }
+            } else {
+                acc.push({
+                    data,
+                    total: fat.valorTotal,
+                    pago: fat.status === EnumStatusFaturamento.Pago ? fat.valorTotal : 0,
+                    pendente: fat.status === EnumStatusFaturamento.Rascunho ? fat.valorTotal : 0
+                });
             }
             return acc;
-        }, {} as Record<string, { data: string; total: number; pago: number; pendente: number }>);
+        }, [] as any[]);
 
-        return Object.values(dados).sort((a, b) => {
-            const dateA = new Date(a.data.split('/').reverse().join('-'));
-            const dateB = new Date(b.data.split('/').reverse().join('-'));
-            return dateA.getTime() - dateB.getTime();
-        });
+        return dados.sort((a, b) => new Date(a.data.split('/').reverse().join('-')).getTime() - new Date(b.data.split('/').reverse().join('-')).getTime());
     };
 
     const getDadosStatus = () => {
         const statusCounts = getStatusCounts();
         return [
-            { name: 'Pago', value: statusCounts.pago, color: COLORS.success },
-            { name: 'Emitido', value: statusCounts.emitido, color: COLORS.info },
             { name: 'Rascunho', value: statusCounts.rascunho, color: COLORS.warning },
+            { name: 'Emitido', value: statusCounts.emitido, color: COLORS.primary },
+            { name: 'Pago', value: statusCounts.pago, color: COLORS.success },
             { name: 'Cancelado', value: statusCounts.cancelado, color: COLORS.danger }
         ].filter(item => item.value > 0);
     };
@@ -225,15 +227,16 @@ const Dashboard = () => {
 
     return (
         <Layout>
-            <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                    <div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="space-y-6">
+                    <div className="text-center">
                         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                         <p className="text-muted-foreground">
                             Visão geral dos faturamentos e métricas financeiras
                         </p>
                     </div>
-                    <div className="flex gap-2">
+
+                    <div className="flex justify-center gap-2">
                         <Button onClick={() => navigate('/faturamento/novo')} className="flex items-center gap-2">
                             <Plus className="h-4 w-4" />
                             Novo Faturamento
@@ -243,266 +246,244 @@ const Dashboard = () => {
                             Ver Todos
                         </Button>
                     </div>
-                </div>
 
-                <Tabs value={periodo} onValueChange={(value) => setPeriodo(value as any)}>
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="hoje">Hoje</TabsTrigger>
-                        <TabsTrigger value="semana">7 dias</TabsTrigger>
-                        <TabsTrigger value="mes">Mês</TabsTrigger>
-                        <TabsTrigger value="ano">Ano</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value={periodo} className="space-y-6">
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Card className="card-hover animate-fade-in-up delay-100">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Total Faturado</CardTitle>
-                                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold animate-count-up">{formatCurrency(estatisticas.totalFaturado)}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {faturamentosFiltrados.length} faturamentos
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="card-hover animate-fade-in-up delay-200">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Total Pago</CardTitle>
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-green-600 animate-count-up">
-                                        {formatCurrency(estatisticas.totalPago)}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        {estatisticas.taxaRecebimento}% recebido
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="card-hover animate-fade-in-up delay-300">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Pendente</CardTitle>
-                                    <Clock className="h-4 w-4 text-yellow-600" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold text-yellow-600 animate-count-up">
-                                        {formatCurrency(estatisticas.totalPendente)}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Aguardando pagamento
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card className="card-hover animate-fade-in-up delay-400">
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-sm font-medium">Taxa de Recebimento</CardTitle>
-                                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold animate-count-up">{estatisticas.taxaRecebimento}%</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Eficiência de cobrança
-                                    </p>
-                                </CardContent>
-                            </Card>
+                    <Tabs value={periodo} onValueChange={(value) => setPeriodo(value as any)}>
+                        <div className="flex justify-center">
+                            <TabsList className="grid w-auto grid-cols-4">
+                                <TabsTrigger value="hoje">Hoje</TabsTrigger>
+                                <TabsTrigger value="semana">7 dias</TabsTrigger>
+                                <TabsTrigger value="mes">Mês</TabsTrigger>
+                                <TabsTrigger value="ano">Ano</TabsTrigger>
+                            </TabsList>
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <Card className="card-hover animate-slide-in-left delay-500">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <PieChart className="h-5 w-5" />
-                                        Status dos Faturamentos
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Distribuição por status no período selecionado
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="h-64">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <RechartsPieChart>
-                                                <Pie
-                                                    data={getDadosStatus()}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    labelLine={false}
-                                                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                                    outerRadius={80}
-                                                    fill="#8884d8"
-                                                    dataKey="value"
-                                                    animationBegin={0}
-                                                    animationDuration={1000}
-                                                >
-                                                    {getDadosStatus().map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip formatter={(value) => [value, 'Faturamentos']} />
-                                            </RechartsPieChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                        <TabsContent value={periodo} className="space-y-6">
+                            <div className="flex justify-center">
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 max-w-4xl">
+                                    <Card className="card-hover animate-fade-in-up delay-100">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Total Faturado</CardTitle>
+                                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold animate-count-up">
+                                                {formatCurrency(estatisticas.totalFaturado)}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                {faturamentosFiltrados.length} faturamento(s)
+                                            </p>
+                                        </CardContent>
+                                    </Card>
 
-                            <Card className="card-hover animate-slide-in-right delay-600">
+                                    <Card className="card-hover animate-fade-in-up delay-200">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Total Pago</CardTitle>
+                                            <CheckCircle className="h-4 w-4 text-green-600" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold text-green-600 animate-count-up">
+                                                {formatCurrency(estatisticas.totalPago)}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Valores recebidos
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="card-hover animate-fade-in-up delay-300">
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-sm font-medium">Pendente</CardTitle>
+                                            <Clock className="h-4 w-4 text-yellow-600" />
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="text-2xl font-bold text-yellow-600 animate-count-up">
+                                                {formatCurrency(estatisticas.totalPendente)}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground">
+                                                Aguardando pagamento
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center">
+                                <div className="grid gap-4 md:grid-cols-2 max-w-6xl w-full">
+                                    <Card className="card-hover animate-slide-in-left delay-500">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <PieChart className="h-5 w-5" />
+                                                Status dos Faturamentos
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Distribuição por status no período selecionado
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="h-64">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <RechartsPieChart>
+                                                        <Pie
+                                                            data={getDadosStatus()}
+                                                            cx="50%"
+                                                            cy="50%"
+                                                            labelLine={false}
+                                                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                            outerRadius={80}
+                                                            fill="#8884d8"
+                                                            dataKey="value"
+                                                            animationBegin={0}
+                                                            animationDuration={1000}
+                                                        >
+                                                            {getDadosStatus().map((entry, index) => (
+                                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                                            ))}
+                                                        </Pie>
+                                                        <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Valor']} />
+                                                    </RechartsPieChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="card-hover animate-slide-in-right delay-600">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <BarChart3 className="h-5 w-5" />
+                                                Faturamentos por Valor
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Top 10 faturamentos por valor
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="h-64">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={getDadosValores()}>
+                                                        <CartesianGrid strokeDasharray="3 3" />
+                                                        <XAxis dataKey="data" />
+                                                        <YAxis />
+                                                        <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Valor']} />
+                                                        <Bar dataKey="valor" fill={COLORS.primary} maxBarSize={60} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+
+                            <Card className="card-hover animate-fade-in-up delay-700">
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <BarChart3 className="h-5 w-5" />
-                                        Faturamentos por Valor
+                                        <TrendingUp className="h-5 w-5" />
+                                        Evolução do Faturamento
                                     </CardTitle>
                                     <CardDescription>
-                                        Top 10 faturamentos por valor
+                                        Tendência de faturamento ao longo do tempo
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="h-64">
+                                    <div className="h-80">
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={getDadosValores()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} maxBarSize={60}>
+                                            <AreaChart data={getDadosEvolucao()}>
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis dataKey="data" />
                                                 <YAxis />
-                                                <Tooltip
-                                                    formatter={(value) => [formatCurrency(Number(value)), 'Valor']}
-                                                    labelFormatter={(label) => `Data: ${label}`}
-                                                />
-                                                <Bar
-                                                    dataKey="valor"
+                                                <Tooltip formatter={(value) => [formatCurrency(Number(value)), 'Valor']} />
+                                                <Legend />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="total"
+                                                    stackId="1"
+                                                    stroke={COLORS.primary}
                                                     fill={COLORS.primary}
-                                                    animationBegin={0}
-                                                    animationDuration={1200}
-                                                    radius={[4, 4, 0, 0]}
+                                                    fillOpacity={0.6}
+                                                    name="Total"
                                                 />
-                                            </BarChart>
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="pago"
+                                                    stackId="2"
+                                                    stroke={COLORS.success}
+                                                    fill={COLORS.success}
+                                                    fillOpacity={0.6}
+                                                    name="Pago"
+                                                />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="pendente"
+                                                    stackId="3"
+                                                    stroke={COLORS.warning}
+                                                    fill={COLORS.warning}
+                                                    fillOpacity={0.6}
+                                                    name="Pendente"
+                                                />
+                                            </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </CardContent>
                             </Card>
-                        </div>
 
-                        <Card className="card-hover animate-fade-in-up delay-700">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <TrendingUp className="h-5 w-5" />
-                                    Evolução do Faturamento
-                                </CardTitle>
-                                <CardDescription>
-                                    Comparação entre total faturado, pago e pendente ao longo do tempo
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-80">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={getDadosEvolucao()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="data" />
-                                            <YAxis tickFormatter={(value) => formatCurrency(value)} />
-                                            <Tooltip
-                                                formatter={(value) => [formatCurrency(Number(value)), 'Valor']}
-                                                labelFormatter={(label) => `Data: ${label}`}
-                                            />
-                                            <Legend />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="total"
-                                                stackId="1"
-                                                stroke={COLORS.primary}
-                                                fill={COLORS.primary}
-                                                fillOpacity={0.6}
-                                                animationBegin={0}
-                                                animationDuration={1500}
-                                                name="Total Faturado"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="pago"
-                                                stackId="2"
-                                                stroke={COLORS.success}
-                                                fill={COLORS.success}
-                                                fillOpacity={0.8}
-                                                animationBegin={200}
-                                                animationDuration={1500}
-                                                name="Pago"
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="pendente"
-                                                stackId="3"
-                                                stroke={COLORS.warning}
-                                                fill={COLORS.warning}
-                                                fillOpacity={0.8}
-                                                animationBegin={400}
-                                                animationDuration={1500}
-                                                name="Pendente"
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            <Card className="card-hover animate-slide-in-left delay-800">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <FileText className="h-5 w-5" />
+                                        Faturamentos Recentes
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Últimos faturamentos criados
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-3">
+                                        {faturamentosFiltrados
+                                            .sort((a, b) => new Date(b.dataFaturamento).getTime() - new Date(a.dataFaturamento).getTime())
+                                            .slice(0, 5)
+                                            .map((faturamento, index) => {
+                                                const statusInfo = getStatusInfo(faturamento.status);
+                                                const Icon = statusInfo.icon;
 
-                        <Card className="card-hover animate-fade-in-up delay-800">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Calendar className="h-5 w-5" />
-                                    Faturamentos Recentes
-                                </CardTitle>
-                                <CardDescription>
-                                    Últimos faturamentos criados
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-3">
-                                    {faturamentosFiltrados
-                                        .sort((a, b) => new Date(b.dataFaturamento).getTime() - new Date(a.dataFaturamento).getTime())
-                                        .slice(0, 5)
-                                        .map((faturamento, index) => {
-                                            const statusInfo = getStatusInfo(faturamento.status);
-                                            const Icon = statusInfo.icon;
-
-                                            return (
-                                                <div
-                                                    key={faturamento.id}
-                                                    className="flex items-center justify-between p-3 border rounded-lg animate-in slide-in-from-left duration-500"
-                                                    style={{ animationDelay: `${index * 100}ms` }}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <Icon className="h-4 w-4" />
-                                                        <div>
+                                                return (
+                                                    <div
+                                                        key={faturamento.id}
+                                                        className="flex items-center justify-between p-3 border rounded-lg animate-in slide-in-from-left duration-500"
+                                                        style={{ animationDelay: `${index * 100}ms` }}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <Icon className="h-4 w-4" />
+                                                            <div>
+                                                                <p className="text-sm font-medium">
+                                                                    {format(new Date(faturamento.dataFaturamento), 'dd/MM/yyyy', { locale: ptBR })}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {faturamento.totalAtendimentos} atendimento(s)
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
                                                             <p className="text-sm font-medium">
-                                                                {format(new Date(faturamento.dataFaturamento), 'dd/MM/yyyy', { locale: ptBR })}
+                                                                {formatCurrency(faturamento.valorTotal)}
                                                             </p>
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {faturamento.totalAtendimentos} atendimento(s)
-                                                            </p>
+                                                            <Badge className={statusInfo.color}>
+                                                                {statusInfo.label}
+                                                            </Badge>
                                                         </div>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="text-sm font-medium">
-                                                            {formatCurrency(faturamento.valorTotal)}
-                                                        </p>
-                                                        <Badge className={statusInfo.color}>
-                                                            {statusInfo.label}
-                                                        </Badge>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    {faturamentosFiltrados.length === 0 && (
-                                        <p className="text-sm text-muted-foreground text-center py-4">
-                                            Nenhum faturamento encontrado para o período selecionado.
-                                        </p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                                                );
+                                            })}
+                                        {faturamentosFiltrados.length === 0 && (
+                                            <p className="text-sm text-muted-foreground text-center py-4">
+                                                Nenhum faturamento encontrado para o período selecionado.
+                                            </p>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
         </Layout>
     );
