@@ -31,11 +31,12 @@ async function client<T>(endpoint: string, {
     ...customConfig,
   };
 
+
   const response = await fetch(`${BASE_URL}/${endpoint}`, config);
 
   if (!response.ok) {
     const error = await response.text();
-    return Promise.reject(new Error(error));
+    return Promise.reject(new Error(`API Error: ${response.status} ${response.statusText} - ${error}`));
   }
 
   if (response.status === 204 || response.headers.get('Content-Length') === '0') {

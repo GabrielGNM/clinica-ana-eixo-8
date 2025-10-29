@@ -42,17 +42,27 @@ const Faturamento = () => {
     const fetchFaturamentos = async () => {
         try {
             setIsLoading(true);
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Usuário não autenticado. Faça login para acessar os faturamentos.');
+            }
+
             const faturamentosData = await getFaturamentos();
 
             setFaturamentos(Array.isArray(faturamentosData) ? faturamentosData : []);
 
-            // Calcular estatísticas localmente
             const statsCalculadas = calcularEstatisticas(faturamentosData || []);
             setStats(statsCalculadas);
         } catch (error) {
             console.error('Erro ao carregar dados de faturamento:', error);
 
-            // Fallback para dados mockados quando a API não está disponível
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+            toast({
+                variant: "destructive",
+                title: "Erro ao carregar faturamentos",
+                description: errorMessage,
+            });
             const dadosMockados: FaturamentoDto[] = [
                 {
                     id: "1",
@@ -147,7 +157,6 @@ const Faturamento = () => {
         fetchFaturamentos();
     }, []);
 
-    // Aplicar filtros locais
     const faturamentosFiltrados = faturamentos.filter(item => {
         const matchBusca = (item.profissionalNome?.toLowerCase() || '').includes(busca.toLowerCase()) ||
             (item.observacoes?.toLowerCase() || '').includes(busca.toLowerCase());

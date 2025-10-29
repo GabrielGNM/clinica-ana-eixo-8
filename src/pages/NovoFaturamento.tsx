@@ -131,15 +131,18 @@ const NovoFaturamento = () => {
                 const faturamentoData: CriarFaturamentoAvulsoDto = {
                     paciente: pacientes.find(p => p.id === data.pacienteId)?.nomeCompleto || "",
                     servico: data.servico,
-                    data: new Date(data.data + 'T10:00:00Z').toISOString(), // Converter para formato ISO
+                    data: new Date(data.data),
                     valor: data.valor,
-                    status: "Rascunho", // Status inicial conforme enum da API
+                    status: "Rascunho",
                     formaPagamento: data.formaPagamento || "",
                     observacoes: data.observacoes,
                     pacienteId: data.pacienteId,
-                    agendamentoId: data.agendamentoId || "00000000-0000-0000-0000-000000000000", // Guid vazio se não selecionado
+                    agendamentoId: data.agendamentoId || "00000000-0000-0000-0000-000000000000",
                     profissionalId: profissionalId
                 };
+
+                console.log('Dados do faturamento:', faturamentoData);
+                console.log('ProfissionalId extraído:', profissionalId);
 
                 await createFaturamento(faturamentoData);
 

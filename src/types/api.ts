@@ -38,6 +38,13 @@ export interface UserDto {
   password?: string;
 }
 
+export interface RegisterProfissionalDto {
+  email: string;
+  password: string;
+  nomeCompleto: string;
+  especialidade: string;
+}
+
 export interface TokenResponseDto {
   accessToken?: string;
 }

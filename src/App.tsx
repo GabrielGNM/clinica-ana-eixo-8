@@ -14,6 +14,8 @@ import Faturamento from "./pages/Faturamento";
 import NovoFaturamento from "./pages/NovoFaturamento";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import RegisterProfissional from "./pages/RegisterProfissional";
+import RegisterCredentials from "./pages/RegisterCredentials";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -29,6 +31,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/register-profissional" element={<RegisterProfissional />} />
+            <Route path="/register-credentials" element={<RegisterCredentials />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Index />} />
