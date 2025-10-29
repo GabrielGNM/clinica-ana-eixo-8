@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import { register as registerService } from "@/services/authService";
 
 const registerSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255, { message: "Email deve ter menos de 255 caracteres" }),
@@ -41,44 +42,26 @@ const Register = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+      await registerService({ email: data.email, password: data.password });
+      toast({
+        title: "Cadastro realizado com sucesso",
+        description: "Você já pode fazer login com suas credenciais.",
       });
-
-      if (response.ok) {
-        toast({
-          title: "Cadastro realizado com sucesso",
-          description: "Você já pode fazer login com suas credenciais.",
-        });
-        
-        // Redireciona para login após 2 segundos
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
-        
-      } else {
-        let errorText = await response.text();
-        if (errorText === "Email already exists.") {
-          errorText = "Email já possui uma conta vinculada.";
-        }
-        toast({
-          variant: "destructive",
-          title: "Erro no cadastro",
-          description: errorText || "Não foi possível criar a conta",
-        });
+      
+      // Redireciona para login após 2 segundos
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+      
+    } catch (error: any) {
+      let errorText = "Não foi possível criar a conta";
+      if (error.message && error.message.includes("Email already exists")) {
+        errorText = "Email já possui uma conta vinculada.";
       }
-    } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erro de conexão",
-        description: "Não foi possível conectar ao servidor. Tente novamente.",
+        title: "Erro no cadastro",
+        description: errorText,
       });
     } finally {
       setIsLoading(false);

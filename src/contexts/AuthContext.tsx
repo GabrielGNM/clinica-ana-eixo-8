@@ -1,11 +1,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { getAuth, login as loginService } from "@/services/authService";
+import { UserDto } from "@/types/api";
 
 interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string) => void;
+  login: (data: UserDto) => Promise<void>;
   logout: () => void;
   validateToken: () => Promise<boolean>;
 }
@@ -24,18 +26,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
         try {
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Auth`, {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-
-          if (response.ok) {
-            setToken(storedToken);
-            setIsAuthenticated(true);
-          } else {
-            localStorage.removeItem("token");
-          }
+          await getAuth();
+          setToken(storedToken);
+          setIsAuthenticated(true);
         } catch (error) {
-          console.error("Token validation failed", error);
           localStorage.removeItem("token");
         }
       }
@@ -51,10 +45,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [isAuthenticated, location, navigate]);
 
-  const login = (newToken: string) => {
-    localStorage.setItem("token", newToken);
-    setToken(newToken);
-    setIsAuthenticated(true);
+  const login = async (data: UserDto) => {
+    const response = await loginService(data);
+    if (response.accessToken) {
+      localStorage.setItem("token", response.accessToken);
+      setToken(response.accessToken);
+      setIsAuthenticated(true);
+    }
   };
 
   const logout = () => {
@@ -69,14 +66,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!currentToken) return false;
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Auth`, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${currentToken}` },
-      });
-
-      return response.ok;
+      await getAuth();
+      return true;
     } catch (error) {
-      console.error("Token validation error:", error);
       return false;
     }
   };

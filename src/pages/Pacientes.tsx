@@ -1,5 +1,7 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Layout from "@/components/Layout/Layout";
 import PatientList from "@/components/Patients/PatientList";
 import { Button } from "@/components/ui/button";
@@ -13,33 +15,98 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  getPacientes,
+  createPaciente,
+  updatePaciente,
+  getPacienteById,
+} from "@/services/pacienteService";
+import { PacienteDto } from "@/types/api";
+
+const pacienteSchema = z.object({
+  nomeCompleto: z.string().nonempty({ message: "Nome é obrigatório" }),
+  dataNascimento: z.string().nonempty({ message: "Data de nascimento é obrigatória" }),
+  telefone: z.string().nonempty({ message: "Telefone é obrigatório" }),
+  email: z.string().email({ message: "Email inválido" }),
+});
+
+type PacienteFormData = z.infer<typeof pacienteSchema>;
 
 const Pacientes = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"new" | "edit">("new");
-  
+  const [patients, setPatients] = useState<PacienteDto[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PacienteDto | null>(null);
+  const { toast } = useToast();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PacienteFormData>({
+    resolver: zodResolver(pacienteSchema),
+  });
+
+  const fetchPatients = async () => {
+    try {
+      const data = await getPacientes();
+      setPatients(data);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar pacientes",
+        description: "Não foi possível buscar a lista de pacientes.",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
   const handleAddPatient = () => {
     setDialogType("new");
+    setSelectedPatient(null);
+    reset({ nomeCompleto: '', dataNascimento: '', telefone: '', email: '' });
     setIsDialogOpen(true);
   };
-  
-  const handleEditPatient = (patientId: number) => {
-    setDialogType("edit");
-    setIsDialogOpen(true);
+
+  const handleEditPatient = async (patientId: string) => {
+    try {
+      const patient = await getPacienteById(patientId);
+      setSelectedPatient(patient);
+      setDialogType("edit");
+      reset(patient);
+      setIsDialogOpen(true);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar paciente",
+        description: "Não foi possível buscar os dados do paciente.",
+      });
+    }
+  };
+
+  const onSubmit = async (data: PacienteFormData) => {
+    try {
+      if (dialogType === "new") {
+        await createPaciente(data);
+        toast({ title: "Paciente criado com sucesso" });
+      } else if (selectedPatient) {
+        await updatePaciente({ ...selectedPatient, ...data });
+        toast({ title: "Paciente atualizado com sucesso" });
+      }
+      setIsDialogOpen(false);
+      fetchPatients();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar paciente",
+        description: "Não foi possível salvar os dados do paciente.",
+      });
+    }
   };
 
   return (
@@ -49,11 +116,12 @@ const Pacientes = () => {
         <p className="text-muted-foreground">Gerencie os pacientes da clínica</p>
       </div>
 
-      <PatientList 
+      <PatientList
+        patients={patients}
         onAddPatient={handleAddPatient}
         onEditPatient={handleEditPatient}
       />
-      
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[650px]">
           <DialogHeader>
@@ -61,171 +129,46 @@ const Pacientes = () => {
               {dialogType === "new" ? "Novo Paciente" : "Editar Paciente"}
             </DialogTitle>
             <DialogDescription>
-              {dialogType === "new" 
-                ? "Preencha os dados para cadastrar um novo paciente" 
+              {dialogType === "new"
+                ? "Preencha os dados para cadastrar um novo paciente"
                 : "Modifique os dados do paciente"}
             </DialogDescription>
           </DialogHeader>
-          
-          <Tabs defaultValue="personal">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="personal">Dados Pessoais</TabsTrigger>
-              <TabsTrigger value="contact">Contato e Endereço</TabsTrigger>
-              <TabsTrigger value="insurance">Convênio</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="personal" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input id="name" placeholder="Nome do paciente" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input id="cpf" placeholder="000.000.000-00" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="birthdate">Data de Nascimento</Label>
-                  <Input id="birthdate" type="date" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="gender">Gênero</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Masculino</SelectItem>
-                      <SelectItem value="F">Feminino</SelectItem>
-                      <SelectItem value="O">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="guardian">Responsável (se menor)</Label>
-                <Input id="guardian" placeholder="Nome do responsável" />
+                <Label htmlFor="nomeCompleto">Nome Completo</Label>
+                <Input id="nomeCompleto" {...register("nomeCompleto")} />
+                {errors.nomeCompleto && <p className="text-destructive">{errors.nomeCompleto.message}</p>}
               </div>
-              
               <div className="grid gap-2">
-                <Label htmlFor="medical_history">Histórico Médico Relevante</Label>
-                <Textarea id="medical_history" placeholder="Informações importantes sobre condições médicas" />
+                <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+                <Input id="dataNascimento" type="date" {...register("dataNascimento")} />
+                {errors.dataNascimento && <p className="text-destructive">{errors.dataNascimento.message}</p>}
               </div>
-            </TabsContent>
-            
-            <TabsContent value="contact" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input id="phone" placeholder="(00) 00000-0000" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input id="email" type="email" placeholder="exemplo@email.com" />
-                </div>
-              </div>
-              
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="address">Endereço</Label>
-                <Input id="address" placeholder="Rua, número, complemento" />
+                <Label htmlFor="telefone">Telefone</Label>
+                <Input id="telefone" {...register("telefone")} />
+                {errors.telefone && <p className="text-destructive">{errors.telefone.message}</p>}
               </div>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="neighborhood">Bairro</Label>
-                  <Input id="neighborhood" placeholder="Bairro" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input id="city" placeholder="Cidade" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="UF" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SP">SP</SelectItem>
-                      <SelectItem value="RJ">RJ</SelectItem>
-                      <SelectItem value="MG">MG</SelectItem>
-                      <SelectItem value="other">...</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="zipcode">CEP</Label>
-                  <Input id="zipcode" placeholder="00000-000" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="emergency_contact">Contato de Emergência</Label>
-                  <Input id="emergency_contact" placeholder="Nome e telefone" />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="insurance" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="insurance_type">Tipo de Atendimento</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="private">Particular</SelectItem>
-                      <SelectItem value="insurance">Convênio</SelectItem>
-                      <SelectItem value="mixed">Misto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="main_insurance">Convênio Principal</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unimed">Unimed</SelectItem>
-                      <SelectItem value="amil">Amil</SelectItem>
-                      <SelectItem value="bradesco">Bradesco Saúde</SelectItem>
-                      <SelectItem value="other">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="insurance_id">Número da Carteirinha</Label>
-                  <Input id="insurance_id" placeholder="Número da carteirinha" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="insurance_validity">Validade</Label>
-                  <Input id="insurance_validity" type="date" />
-                </div>
-              </div>
-              
               <div className="grid gap-2">
-                <Label htmlFor="insurance_notes">Observações sobre o Convênio</Label>
-                <Textarea id="insurance_notes" placeholder="Informações adicionais sobre o convênio" />
+                <Label htmlFor="email">E-mail</Label>
+                <Input id="email" type="email" {...register("email")} />
+                {errors.email && <p className="text-destructive">{errors.email.message}</p>}
               </div>
-            </TabsContent>
-          </Tabs>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Salvar</Button>
-          </DialogFooter>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </Layout>

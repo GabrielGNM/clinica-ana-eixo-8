@@ -38,48 +38,16 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/Auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
+      await login(data);
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Você será redirecionado em breve.",
       });
-
-      if (response.ok) {
-        const result = await response.json();
-
-        // Salva o token
-        if (result.accessToken) {
-          login(result.accessToken);
-          toast({
-            title: "Login realizado com sucesso",
-            description: "Você será redirecionado em breve.",
-          });
-        } else {
-          // Handle case where accessToken is missing
-          toast({
-            variant: "destructive",
-            title: "Erro no login",
-            description: "Não foi possível obter o token de autenticação.",
-          });
-        }
-      } else {
-        const errorData = await response.json();
-        toast({
-          variant: "destructive",
-          title: "Erro no login",
-          description: errorData.message || "Credenciais inválidas",
-        });
-      }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erro de conexão",
-        description: "Não foi possível conectar ao servidor. Tente novamente.",
+        title: "Erro no login",
+        description: "Credenciais inválidas ou erro no servidor.",
       });
     } finally {
       setIsLoading(false);

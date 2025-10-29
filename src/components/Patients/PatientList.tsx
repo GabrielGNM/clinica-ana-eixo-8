@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,72 +15,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Search, Plus, UserPlus } from "lucide-react";
-
-type Patient = {
-  id: number;
-  name: string;
-  cpf: string;
-  phone: string;
-  insurance: string;
-  lastAppointment: string;
-};
-
-const patients: Patient[] = [
-  {
-    id: 1,
-    name: "Ana Silva",
-    cpf: "123.456.789-00",
-    phone: "(11) 98765-4321",
-    insurance: "Unimed",
-    lastAppointment: "10/04/2025"
-  },
-  {
-    id: 2,
-    name: "Carlos Mendes",
-    cpf: "987.654.321-00",
-    phone: "(11) 91234-5678",
-    insurance: "Amil",
-    lastAppointment: "08/04/2025"
-  },
-  {
-    id: 3,
-    name: "Mariana Alves",
-    cpf: "456.789.123-00",
-    phone: "(11) 94567-8901",
-    insurance: "Bradesco Saúde",
-    lastAppointment: "05/04/2025"
-  },
-  {
-    id: 4,
-    name: "João Pedro",
-    cpf: "654.321.987-00",
-    phone: "(11) 97890-1234",
-    insurance: "Particular",
-    lastAppointment: "01/04/2025"
-  },
-  {
-    id: 5,
-    name: "Beatriz Costa",
-    cpf: "321.987.654-00",
-    phone: "(11) 93456-7890",
-    insurance: "Unimed",
-    lastAppointment: "30/03/2025"
-  },
-];
+import { MoreHorizontal, Search, UserPlus } from "lucide-react";
+import { PacienteDto } from "@/types/api";
 
 type PatientListProps = {
+  patients: PacienteDto[];
   onAddPatient: () => void;
-  onEditPatient: (patientId: number) => void;
+  onEditPatient: (patientId: string) => void;
 };
 
-const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
+const PatientList = ({ patients, onAddPatient, onEditPatient }: PatientListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   
   const filteredPatients = patients.filter(
-    patient => patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              patient.cpf.includes(searchTerm) ||
-              patient.phone.includes(searchTerm)
+    patient => 
+      (patient.nomeCompleto && patient.nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (patient.telefone && patient.telefone.includes(searchTerm))
   );
 
   return (
@@ -107,10 +57,8 @@ const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead>CPF</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Telefone</TableHead>
-              <TableHead>Convênio Principal</TableHead>
-              <TableHead>Última Consulta</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -118,11 +66,9 @@ const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
             {filteredPatients.length > 0 ? (
               filteredPatients.map((patient) => (
                 <TableRow key={patient.id}>
-                  <TableCell className="font-medium">{patient.name}</TableCell>
-                  <TableCell>{patient.cpf}</TableCell>
-                  <TableCell>{patient.phone}</TableCell>
-                  <TableCell>{patient.insurance}</TableCell>
-                  <TableCell>{patient.lastAppointment}</TableCell>
+                  <TableCell className="font-medium">{patient.nomeCompleto}</TableCell>
+                  <TableCell>{patient.email}</TableCell>
+                  <TableCell>{patient.telefone}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -132,7 +78,7 @@ const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEditPatient(patient.id)}>
+                        <DropdownMenuItem onClick={() => onEditPatient(patient.id!)}>
                           Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem>Ver histórico</DropdownMenuItem>
@@ -147,7 +93,7 @@ const PatientList = ({ onAddPatient, onEditPatient }: PatientListProps) => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                   Nenhum paciente encontrado
                 </TableCell>
               </TableRow>

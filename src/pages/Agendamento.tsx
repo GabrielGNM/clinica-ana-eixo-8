@@ -1,5 +1,7 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Layout from "@/components/Layout/Layout";
 import CalendarView from "@/components/Scheduler/CalendarView";
 import { Button } from "@/components/ui/button";
@@ -20,25 +22,106 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ptBR } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
+import {
+  getAgendamentos,
+  createAgendamento,
+  updateAgendamento,
+  getAgendamentoById,
+} from "@/services/agendamentoService";
+import { getPacientes } from "@/services/pacienteService";
+import { getProfissionais } from "@/services/profissionalService";
+import { AgendamentoDto, PacienteDto, ProfissionalDto, EnumTipoAtendimento } from "@/types/api";
+
+const agendamentoSchema = z.object({
+  pacienteId: z.string().nonempty({ message: "Paciente é obrigatório" }),
+  profissionalId: z.string().nonempty({ message: "Profissional é obrigatório" }),
+  dataHora: z.string().nonempty({ message: "Data e hora são obrigatórios" }),
+  tipoAtendimento: z.nativeEnum(EnumTipoAtendimento),
+  observacoes: z.string().optional(),
+});
+
+type AgendamentoFormData = z.infer<typeof agendamentoSchema>;
 
 const Agendamento = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<"new" | "edit">("new");
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  
-  const handleAppointmentClick = (appointmentId: number | null, day: number, hour: number) => {
+  const [agendamentos, setAgendamentos] = useState<AgendamentoDto[]>([]);
+  const [pacientes, setPacientes] = useState<PacienteDto[]>([]);
+  const [profissionais, setProfissionais] = useState<ProfissionalDto[]>([]);
+  const [selectedAgendamento, setSelectedAgendamento] = useState<AgendamentoDto | null>(null);
+  const { toast } = useToast();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<AgendamentoFormData>({
+    resolver: zodResolver(agendamentoSchema),
+  });
+
+  const fetchData = async () => {
+    try {
+      const [agendamentosData, pacientesData, profissionaisData] = await Promise.all([
+        getAgendamentos(),
+        getPacientes(),
+        getProfissionais(),
+      ]);
+      setAgendamentos(agendamentosData);
+      setPacientes(pacientesData);
+      setProfissionais(profissionaisData);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar dados",
+        description: "Não foi possível buscar os dados necessários para a página.",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleAppointmentClick = async (appointmentId: string | null, date: Date) => {
     if (appointmentId) {
-      setDialogType("edit");
+      try {
+        const agendamento = await getAgendamentoById(appointmentId);
+        setSelectedAgendamento(agendamento);
+        setDialogType("edit");
+        reset(agendamento);
+        setIsDialogOpen(true);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Erro", description: "Agendamento não encontrado" });
+      }
     } else {
       setDialogType("new");
+      setSelectedAgendamento(null);
+      reset({ pacienteId: '', profissionalId: '', dataHora: date.toISOString(), tipoAtendimento: EnumTipoAtendimento.CONSULTA, observacoes: '' });
+      setIsDialogOpen(true);
     }
-    setIsDialogOpen(true);
+  };
+  
+  const onSubmit = async (data: AgendamentoFormData) => {
+    try {
+      if (dialogType === "new") {
+        await createAgendamento(data);
+        toast({ title: "Agendamento criado com sucesso" });
+      } else if (selectedAgendamento) {
+        await updateAgendamento({ ...selectedAgendamento, ...data });
+        toast({ title: "Agendamento atualizado com sucesso" });
+      }
+      setIsDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar agendamento",
+        description: "Não foi possível salvar os dados do agendamento.",
+      });
+    }
   };
 
   return (
@@ -48,15 +131,16 @@ const Agendamento = () => {
           <h1 className="text-2xl font-bold tracking-tight">Agendamento</h1>
           <p className="text-muted-foreground">Gerencie os agendamentos da clínica</p>
         </div>
-        <Button onClick={() => {
-          setDialogType("new");
-          setIsDialogOpen(true);
-        }}>
+        <Button onClick={() => handleAppointmentClick(null, new Date())}>
           Novo Agendamento
         </Button>
       </div>
 
-      <CalendarView onAppointmentClick={handleAppointmentClick} />
+      <CalendarView 
+        appointments={agendamentos}
+        professionals={profissionais}
+        onAppointmentClick={handleAppointmentClick} 
+      />
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[550px]">
@@ -71,149 +155,60 @@ const Agendamento = () => {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="grid gap-4 py-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-4">
             <div className="grid grid-cols-1 gap-2">
-              <label htmlFor="patient" className="text-sm font-medium">
-                Paciente
-              </label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o paciente" />
-                </SelectTrigger>
+              <label htmlFor="pacienteId" className="text-sm font-medium">Paciente</label>
+              <Select onValueChange={(value) => setValue('pacienteId', value)} defaultValue={selectedAgendamento?.pacienteId}>
+                <SelectTrigger><SelectValue placeholder="Selecione o paciente" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Ana Silva</SelectItem>
-                  <SelectItem value="2">Carlos Mendes</SelectItem>
-                  <SelectItem value="3">Mariana Alves</SelectItem>
-                  <SelectItem value="4">João Pedro</SelectItem>
-                  <SelectItem value="5">Beatriz Costa</SelectItem>
+                  {pacientes.map(p => <SelectItem key={p.id} value={p.id!}>{p.nomeCompleto}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.pacienteId && <p className="text-destructive">{errors.pacienteId.message}</p>}
             </div>
             
             <div className="grid grid-cols-1 gap-2">
-              <label htmlFor="professional" className="text-sm font-medium">
-                Profissional
-              </label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o profissional" />
-                </SelectTrigger>
+              <label htmlFor="profissionalId" className="text-sm font-medium">Profissional</label>
+              <Select onValueChange={(value) => setValue('profissionalId', value)} defaultValue={selectedAgendamento?.profissionalId}>
+                <SelectTrigger><SelectValue placeholder="Selecione o profissional" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">Dra. Carla Santos</SelectItem>
-                  <SelectItem value="2">Dr. Marcos Oliveira</SelectItem>
-                  <SelectItem value="3">Dra. Renata Lima</SelectItem>
+                  {profissionais.map(p => <SelectItem key={p.id} value={p.id!}>{p.nomeCompleto}</SelectItem>)}
                 </SelectContent>
               </Select>
+              {errors.profissionalId && <p className="text-destructive">{errors.profissionalId.message}</p>}
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid grid-cols-1 gap-2">
-                <label className="text-sm font-medium">
-                  Data
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={cn(
-                        "justify-start text-left font-normal",
-                        !selectedDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? (
-                        format(selectedDate, "PPP", { locale: ptBR })
-                      ) : (
-                        <span>Selecione uma data</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                      locale={ptBR}
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <label className="text-sm font-medium">Data</label>
+                <Input type="datetime-local" {...register("dataHora")} />
+                {errors.dataHora && <p className="text-destructive">{errors.dataHora.message}</p>}
               </div>
-              
               <div className="grid grid-cols-1 gap-2">
-                <label className="text-sm font-medium">
-                  Horário
-                </label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o horário" />
-                  </SelectTrigger>
+                <label className="text-sm font-medium">Tipo de Atendimento</label>
+                <Select onValueChange={(value) => setValue('tipoAtendimento', Number(value) as EnumTipoAtendimento)} defaultValue={selectedAgendamento?.tipoAtendimento?.toString()}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 10 }, (_, i) => i + 8).map((hour) => (
-                      <SelectItem key={hour} value={hour.toString()}>
-                        {hour}:00
-                      </SelectItem>
-                    ))}
+                    {Object.values(EnumTipoAtendimento).filter(v => typeof v === 'string').map((v, i) => <SelectItem key={i} value={i.toString()}>{v as string}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid grid-cols-1 gap-2">
-                <label className="text-sm font-medium">
-                  Duração
-                </label>
-                <Select defaultValue="1">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 hora</SelectItem>
-                    <SelectItem value="1.5">1 hora e 30 minutos</SelectItem>
-                    <SelectItem value="2">2 horas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-2">
-                <label className="text-sm font-medium">
-                  Tipo de Sessão/Convênio
-                </label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="private">Particular</SelectItem>
-                    <SelectItem value="unimed">Unimed</SelectItem>
-                    <SelectItem value="amil">Amil</SelectItem>
-                    <SelectItem value="bradesco">Bradesco Saúde</SelectItem>
-                  </SelectContent>
-                </Select>
+                {errors.tipoAtendimento && <p className="text-destructive">{errors.tipoAtendimento.message}</p>}
               </div>
             </div>
             
             <div className="grid grid-cols-1 gap-2">
-              <label className="text-sm font-medium">
-                Observações
-              </label>
-              <Textarea placeholder="Adicione informações importantes sobre o agendamento" />
+              <label className="text-sm font-medium">Observações</label>
+              <Textarea placeholder="Adicione informações importantes sobre o agendamento" {...register("observacoes")} />
             </div>
-          </div>
           
-          <DialogFooter>
-            {dialogType === "edit" && (
-              <Button variant="outline" className="mr-auto">
-                Cancelar Agendamento
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Salvar</Button>
-          </DialogFooter>
+            <DialogFooter>
+              {dialogType === "edit" && (
+                <Button variant="outline" className="mr-auto">Cancelar Agendamento</Button>
+              )}
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+              <Button type="submit">Salvar</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </Layout>
