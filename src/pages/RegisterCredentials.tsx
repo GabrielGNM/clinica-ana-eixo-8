@@ -51,12 +51,9 @@ const RegisterCredentials = () => {
         email: data.email,
         password: data.password
       });
-      localStorage.setItem('credentialsData', JSON.stringify({
-        email: data.email,
-        password: data.password,
-        accessToken: loginResponse.accessToken
-      }));
       
+      sessionStorage.setItem('token', loginResponse.accessToken);
+
       navigate('/register-profissional');
     } catch (error: any) {
       console.error('Erro no registro:', error);

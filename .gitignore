@@ -20,6 +20,8 @@ dist-ssr
 *.sqlite
 *.vsidx
 *.suo
+*.vsidx
+*.sqlite
 *.ntvs*
 *.njsproj
 *.sln

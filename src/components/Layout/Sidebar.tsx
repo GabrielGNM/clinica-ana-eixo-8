@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import logo from "@/assets/logo.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { Role } from "@/types/api";
 
 const navItems = [
   {
@@ -36,6 +38,7 @@ const navItems = [
     name: "Pacientes",
     href: "/pacientes",
     icon: Users,
+    roles: [Role.Gerencia],
   },
   {
     name: "Documentos",
@@ -46,6 +49,13 @@ const navItems = [
     name: "Faturamento",
     href: "/faturamento",
     icon: CreditCard,
+    roles: [Role.Gerencia],
+  },
+  {
+    name: "Configurações",
+    href: "/configuracoes",
+    icon: Settings,
+    roles: [Role.Gerencia],
   },
 ];
 
@@ -53,12 +63,21 @@ const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (!user || !item.roles) {
+      return true;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (item.roles as any).includes(user.role);
+  });
 
   if (isMobile) {
     return (
       <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50 safe-area-bottom">
         <nav className="flex justify-around items-center py-2 px-2">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <Link
               key={item.name}
               to={item.href}
@@ -108,7 +127,7 @@ const Sidebar = () => {
 
       <nav className="p-2">
         <ul className="space-y-2">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <li key={item.name}>
               <Link
                 to={item.href}

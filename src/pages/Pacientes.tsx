@@ -22,7 +22,8 @@ import {
   updatePaciente,
   getPacienteById,
 } from "@/services/pacienteService";
-import { PacienteDto } from "@/types/api";
+import { PacienteDto, Role } from "@/types/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const pacienteSchema = z.object({
   nomeCompleto: z.string().nonempty({ message: "Nome é obrigatório" }),
@@ -39,6 +40,7 @@ const Pacientes = () => {
   const [patients, setPatients] = useState<PacienteDto[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<PacienteDto | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const {
     register,
@@ -49,22 +51,26 @@ const Pacientes = () => {
     resolver: zodResolver(pacienteSchema),
   });
 
-  const fetchPatients = async () => {
-    try {
-      const data = await getPacientes();
-      setPatients(data);
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao buscar pacientes",
-        description: "Não foi possível buscar a lista de pacientes.",
-      });
-    }
-  };
-
   useEffect(() => {
-    fetchPatients();
-  }, []);
+    const fetchPatients = async () => {
+      try {
+        if (user?.role === Role.Gerencia) {
+          const data = await getPacientes();
+          setPatients(data);
+        }
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Erro ao buscar pacientes",
+          description: "Não foi possível buscar a lista de pacientes.",
+        });
+      }
+    };
+
+    if (user) {
+      fetchPatients();
+    }
+  }, [user, toast]);
 
   const handleAddPatient = () => {
     setDialogType("new");
@@ -104,7 +110,7 @@ const Pacientes = () => {
         toast({ title: "Paciente atualizado com sucesso" });
       }
       setIsDialogOpen(false);
-      fetchPatients();
+      // fetchPatients();
     } catch (error) {
       toast({
         variant: "destructive",
@@ -113,6 +119,16 @@ const Pacientes = () => {
       });
     }
   };
+
+  if (user?.role !== Role.Gerencia) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground">Você não tem permissão para acessar esta página.</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
