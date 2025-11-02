@@ -18,6 +18,8 @@ dist-ssr
 .idea
 .DS_Store
 *.suo
+*.vsidx
+*.sqlite
 *.ntvs*
 *.njsproj
 *.sln
