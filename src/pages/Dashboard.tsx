@@ -46,7 +46,7 @@ import {
 const Dashboard = () => {
     const [faturamentos, setFaturamentos] = useState<FaturamentoDto[]>([]);
     const [loading, setLoading] = useState(true);
-    const [periodo, setPeriodo] = useState<'hoje' | 'semana' | 'mes' | 'ano'>('mes');
+    const [periodo, setPeriodo] = useState<'hoje' | 'semana' | 'mes' | 'ano'>('ano');
     const { toast } = useToast();
     const navigate = useNavigate();
 
@@ -333,8 +333,6 @@ const Dashboard = () => {
                                                             outerRadius={80}
                                                             fill="#8884d8"
                                                             dataKey="value"
-                                                            animationBegin={0}
-                                                            animationDuration={1000}
                                                         >
                                                             {getDadosStatus().map((entry, index) => (
                                                                 <Cell key={`cell-${index}`} fill={entry.color} />
