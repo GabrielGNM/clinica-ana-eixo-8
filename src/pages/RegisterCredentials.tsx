@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Mail, Lock, UserPlus, ArrowLeft, User, GraduationCap } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, UserPlus, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,22 +10,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
-import { registerProfissional as registerService } from "@/services/authService";
+import { registerUser, login } from "@/services/authService";
 
-const registerSchema = z.object({
+const credentialsSchema = z.object({
   email: z.string().trim().email({ message: "Email inválido" }).max(255, { message: "Email deve ter menos de 255 caracteres" }),
   password: z.string().trim().min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
-  confirmPassword: z.string().trim(),
-  nomeCompleto: z.string().trim().min(2, { message: "Nome completo deve ter pelo menos 2 caracteres" }),
-  especialidade: z.string().trim().min(2, { message: "Especialidade é obrigatória" })
+  confirmPassword: z.string().trim()
 }).refine((data) => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
 });
 
-type RegisterFormData = z.infer<typeof registerSchema>;
+type CredentialsFormData = z.infer<typeof credentialsSchema>;
 
-const Register = () => {
+const RegisterCredentials = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,43 +34,60 @@ const Register = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+  } = useForm<CredentialsFormData>({
+    resolver: zodResolver(credentialsSchema),
   });
 
-  const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
-    
+  const onSubmit = async (data: CredentialsFormData) => {
     try {
-      await registerService({ 
-        email: data.email, 
-        password: data.password,
-        nomeCompleto: data.nomeCompleto,
-        especialidade: data.especialidade
-      });
-      toast({
-        title: "Cadastro realizado com sucesso",
-        description: "Você já pode fazer login com suas credenciais.",
+      setIsLoading(true);
+      
+      const tokenResponse = await registerUser({
+        email: data.email,
+        password: data.password
       });
       
-      setTimeout(() => {
-        navigate("/");
-      }, 2000);
+      const loginResponse = await login({
+        email: data.email,
+        password: data.password
+      });
       
+      sessionStorage.setItem('token', loginResponse.accessToken);
+
+      navigate('/register-profissional');
     } catch (error: any) {
+      console.error('Erro no registro:', error);
+      
       let errorText = "Não foi possível criar a conta";
       if (error.message && error.message.includes("Email already exists")) {
-        errorText = "Email já possui uma conta vinculada.";
+        errorText = "Este email já possui uma conta vinculada. Tente fazer login ou use outro email.";
+      } else if (error.message && error.message.includes("400")) {
+        errorText = "Dados inválidos. Verifique se o email está correto e a senha tem pelo menos 6 caracteres.";
       }
+      
       toast({
         variant: "destructive",
         title: "Erro no cadastro",
         description: errorText,
+        action: error.message && error.message.includes("Email already exists") ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/')}
+          >
+            Ir para Login
+          </Button>
+        ) : undefined,
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleBack = () => {
+    navigate('/');
+  };
+
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -85,7 +100,7 @@ const Register = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-foreground">neurohabiliTo</CardTitle>
           <CardDescription className="text-muted-foreground">
-            Cadastre-se como profissional para começar
+            Etapa 1 de 2 - Credenciais de Acesso
           </CardDescription>
         </CardHeader>
         
@@ -109,45 +124,6 @@ const Register = () => {
                 <p className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nomeCompleto" className="text-sm font-medium text-foreground">
-                Nome Completo
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-                <Input
-                  id="nomeCompleto"
-                  type="text"
-                  placeholder="Seu nome completo"
-                  className="pl-10"
-                  {...register("nomeCompleto")}
-                />
-              </div>
-              {errors.nomeCompleto && (
-                <p className="text-sm text-destructive">{errors.nomeCompleto.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="especialidade" className="text-sm font-medium text-foreground">
-                Especialidade
-              </Label>
-              <div className="relative">
-                <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-                <Input
-                  id="especialidade"
-                  type="text"
-                  placeholder="Ex: Fisioterapia, Terapia Ocupacional, Fonoaudiologia"
-                  className="pl-10"
-                  {...register("especialidade")}
-                />
-              </div>
-              {errors.especialidade && (
-                <p className="text-sm text-destructive">{errors.especialidade.message}</p>
-              )}
-            </div>
-
 
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-foreground">
@@ -205,33 +181,35 @@ const Register = () => {
               )}
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
-                  Cadastrando...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <UserPlus size={16} />
-                  Cadastrar Profissional
-                </div>
-              )}
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => navigate("/login")}
-            >
-              <ArrowLeft size={16} className="mr-2" />
-              Voltar para Login
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={handleBack}
+              >
+                <ArrowLeft size={16} className="mr-2" />
+                Voltar
+              </Button>
+              
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                    Cadastrando...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <UserPlus size={16} />
+                    Finalizar Cadastro
+                  </div>
+                )}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -239,4 +217,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default RegisterCredentials;

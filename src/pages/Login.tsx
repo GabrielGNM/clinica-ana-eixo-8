@@ -140,7 +140,7 @@ const Login = () => {
               type="button"
               variant="outline"
               className="w-full"
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/register-credentials")}
             >
               <UserPlus size={16} className="mr-2" />
               Criar Conta

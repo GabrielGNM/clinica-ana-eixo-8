@@ -97,11 +97,16 @@ const Pacientes = () => {
 
   const onSubmit = async (data: PacienteFormData) => {
     try {
+      const dataToSend = {
+        ...data,
+        dataNascimento: data.dataNascimento ? new Date(data.dataNascimento + 'T00:00:00Z').toISOString() : data.dataNascimento
+      };
+
       if (dialogType === "new") {
-        await createPaciente(data);
+        await createPaciente(dataToSend);
         toast({ title: "Paciente criado com sucesso" });
       } else if (selectedPatient) {
-        await updatePaciente({ ...selectedPatient, ...data });
+        await updatePaciente({ ...selectedPatient, ...dataToSend });
         toast({ title: "Paciente atualizado com sucesso" });
       }
       setIsDialogOpen(false);

@@ -21,7 +21,7 @@ import { Role } from "@/types/api";
 const navItems = [
   {
     name: "Painel Inicial",
-    href: "/",
+    href: "/dashboard",
     icon: Home,
   },
   {
